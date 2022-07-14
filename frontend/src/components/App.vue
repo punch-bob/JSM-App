@@ -24,7 +24,7 @@
                 <input class="joke-search" type="text" placeholder="Enter tags:">
                 <button class="search-btn">Find</button><br><br>
                 <span class="site-header">Create new joke:</span>
-                <button class="create-joke-btn">Add new</button>
+                <button class="create-joke-btn" @click="showJokeCreationPage">Add new</button>
             </div>
 
             <div class="joke-line">
@@ -40,6 +40,7 @@
 
             <AuthPage ref="authPage"></AuthPage>
             <LogUpPage ref="logUpPage"></LogUpPage>
+            <JokeCreationPage v-bind:authorName='authorName' ref="jokeCreationPage"></JokeCreationPage>
         </div>
     </div>
 </template>
@@ -50,13 +51,15 @@ import Joke from './joke.vue'
 import JokeList from './jokeList.vue'
 import AuthPage from './authorizationPage.vue'
 import LogUpPage from './logUpPage.vue'
+import JokeCreationPage from './jokeCreationPage.vue'
 import {axios_requests} from '../utils/requests.js'
 export default {
     components: {
     Joke,
     JokeList,
     AuthPage,
-    LogUpPage
+    LogUpPage,
+    JokeCreationPage
   },
   created() {
     axios_requests.get().then(result => {
@@ -95,7 +98,8 @@ export default {
             tags: ["AI"],
             author_name: "ruGPT-3 XL",
             date: "12.07.2022 00:00:00"
-        }
+        },
+        authorName: 'Kostya'
     }
   },
   methods: {
@@ -104,6 +108,9 @@ export default {
     },
     showLogUpPage: function() {
         this.$refs.logUpPage.show = true
+    },
+    showJokeCreationPage: function() {
+        this.$refs.jokeCreationPage.show = true
     }
   }
 }
