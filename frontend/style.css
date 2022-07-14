@@ -1,7 +1,8 @@
 :root {
     --header-color:rgb(0, 36, 72);
     --logo-color: rgb(32,128,223);
-    --text-pink: rgb(255, 140, 159)
+    --text-pink: rgb(255, 140, 159);
+    --special-gray: rgb(227, 227, 227);
 }
 
 @font-face {

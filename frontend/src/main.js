@@ -8,5 +8,3 @@ function init() {
 }
 
 window.onload = init
-
-//улыбок тебе дед Макар)

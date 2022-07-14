@@ -10,7 +10,8 @@
     "axios": "^0.27.2",
     "cors": "^2.8.5",
     "qs": "^6.11.0",
-    "vue": "^3.2.37"
+    "vue": "^3.2.37",
+    "vue-observe-visibility": "^1.0.0"
   },
   "devDependencies": {
     "@vitejs/plugin-vue": "^2.3.3",

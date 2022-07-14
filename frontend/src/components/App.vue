@@ -13,7 +13,7 @@
                 <!--Reagistration buttons-->
                 <div class="reg-btns">
                     <button @click="showAuthPage" class="reg-btn">Sign In</button>
-                    <button class="reg-btn">Sign Up</button>
+                    <button @click="showLogUpPage" class="reg-btn">Sign Up</button>
                 </div>
             </div>
         </header>
@@ -39,6 +39,7 @@
             </div>
 
             <AuthPage ref="authPage"></AuthPage>
+            <LogUpPage ref="logUpPage"></LogUpPage>
         </div>
     </div>
 </template>
@@ -48,12 +49,14 @@
 import Joke from './joke.vue'
 import JokeList from './jokeList.vue'
 import AuthPage from './authorizationPage.vue'
+import LogUpPage from './logUpPage.vue'
 import {axios_requests} from '../utils/requests.js'
 export default {
     components: {
     Joke,
     JokeList,
-    AuthPage
+    AuthPage,
+    LogUpPage
   },
   created() {
     axios_requests.get().then(result => {
@@ -77,9 +80,16 @@ export default {
             author_name: "Igor",
             date: "13.07.2022 13:37:51"
         }],
-        dailyJoke: "",
+        dailyJoke: {
+            id: 2,
+            text: "Kolobok povesilsya)",
+            rate: 100,
+            tags: ["Kolobok"],
+            author_name: "A4",
+            date: "13.07.2022 09:12:18"
+        },
         generatedJoke: {
-            id: 0,
+            id: 3,
             text: "AHAHAHHAHAHAHAHAHAHAHAHAHAHAH)",
             rate: 1,
             tags: ["AI"],
@@ -90,8 +100,10 @@ export default {
   },
   methods: {
     showAuthPage: function() {
-        console.log(this.$refs.authPage)
         this.$refs.authPage.show = true
+    },
+    showLogUpPage: function() {
+        this.$refs.logUpPage.show = true
     }
   }
 }
