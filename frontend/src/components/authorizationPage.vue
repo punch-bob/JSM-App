@@ -90,17 +90,6 @@ export default {
         margin: auto;
     }
 
-    .text {
-        display: table;
-        margin: auto;
-        margin-bottom: 30px;
-        color: var(--text-pink);
-    }
-
-    .close-btn:active {
-        font-size: 27px;
-    }
-
     .login-btn {
         display: table;
         margin: auto;
@@ -118,36 +107,5 @@ export default {
         color: var(--logo-color);
         background: white;
         cursor: pointer;
-    }
-
-    .error-msg {
-        display: table;
-        margin: auto;
-        margin-top: 20px;
-        color: red;
-    }
-
-    .image {
-        width: 20px;
-        height: 20px;
-        padding: 3px;
-        display: table;
-        margin: auto;
-    }
-
-    .hide-show-password-btn {
-        border: none;
-        background: white;
-        cursor: pointer;
-        border-radius: 10px;
-        border-color: var(--logo-color);
-        margin-bottom: 30px;
-        margin-left: 5px;
-        color: var(--logo-color);
-        border-width: 2.5px;
-        border-style: solid; 
-        height: 37px;
-        font-weight: bold;
-        padding: 3px 3px;
     }
 </style>

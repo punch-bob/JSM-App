@@ -59,7 +59,7 @@ export default {
 
 <style>
     .joke-space {
-        background: var(--special-gray);
+        background: var(--special-grey);
         border-radius: 10px;
         max-width: 100%;
         height: 100%;

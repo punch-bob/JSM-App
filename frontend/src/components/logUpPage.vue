@@ -211,10 +211,14 @@ export default {
         display: table;
         margin: auto;
         margin-top: 20px;
-        color: var(--special-gray);
+        color: var(--special-grey);
     }
 
     .non-auth:hover {
+        cursor: pointer;
+    }
+
+    .non-auth:active {
         font-size: larger;
         cursor: pointer;
     }
