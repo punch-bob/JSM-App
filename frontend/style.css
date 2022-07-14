@@ -1,0 +1,18 @@
+:root {
+    --header-color:rgb(0, 36, 72);
+    --logo-color: rgb(32,128,223);
+    --text-pink: rgb(255, 140, 159)
+}
+
+@font-face {
+    font-family: JetBrains;
+    src: url(/public/fonts/ttf/JetBrainsMono-Regular.ttf);
+  }
+
+* {
+    font-family: JetBrains;
+}
+
+body {
+    height: 100vh;
+}
