@@ -3,11 +3,11 @@
         <!--Acc data-->
         <div class="joke-data">
             <img src="/public/clown-acc.svg" class="acc-avatar">
-            <span class="acc-name">{{authorName}}</span><br>
+            <span class="acc-name">{{ joke.author_name }}</span><br>
              <!--Joke-->
-            <p class="joke-text">{{jokeText}}</p>
-            <TagsList v-bind:tagsList='tagsList'/><br>
-            <span class="joke-date">{{date}}</span>
+            <p class="joke-text">{{ joke.text }}</p>
+            <TagsList v-bind:tagsList='joke.tags'/><br>
+            <span class="joke-date">{{ formatedDate }}</span>
         </div>
 
         <!--Rating-->
@@ -35,23 +35,26 @@ export default {
     data() {
         return {
             id: this.joke.id,
-            authorName: this.joke.author_name,
-            jokeText: this.joke.text,
-            rating: this.joke.rate,
-            tagsList: this.joke.tags,
-            date: this.joke.date
+            rating: this.joke.rate
         }
     },
     methods: {
         increaseRating: function () {
             axios_requests.updateRating(this.id, "increase").then(result => {
+                this.joke.rate = result.data
                 this.rating = result.data
             })
         },
         decreaseRating: function() {
             axios_requests.updateRating(this.id, "decrease").then(result => {
+                this.joke.rate = result.data
                 this.rating = result.data
             })
+        }
+    },
+    computed: {
+        formatedDate() {
+            return this.joke.date.substring(0, 10).replaceAll('-', '.')
         }
     }
 }

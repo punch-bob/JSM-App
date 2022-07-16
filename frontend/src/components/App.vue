@@ -11,7 +11,7 @@
                 </div>
     
                 <!--Reagistration buttons-->
-                <div class="reg-btns">
+                <div class="reg-btns" v-if="authorName === ''">
                     <button @click="showAuthPage" class="reg-btn">Sign In</button>
                     <button @click="showLogUpPage" class="reg-btn">Sign Up</button>
                 </div>
@@ -38,9 +38,9 @@
                 <Joke v-bind:joke="generatedJoke"/>
             </div>
 
-            <AuthPage ref="authPage"></AuthPage>
-            <LogUpPage ref="logUpPage"></LogUpPage>
-            <JokeCreationPage v-bind:authorName='authorName' ref="jokeCreationPage"></JokeCreationPage>
+            <AuthPage ref="authPage"/>
+            <LogUpPage ref="logUpPage"/>
+            <JokeCreationPage v-bind:authorName='authorName' ref="jokeCreationPage"/>
         </div>
     </div>
 </template>
@@ -61,45 +61,23 @@ export default {
     LogUpPage,
     JokeCreationPage
   },
-  created() {
+  beforeCreate() {
     axios_requests.get().then(result => {
-            this.jokeList = result.data
-        })
+        this.jokeList = result.data
+    })
+    axios_requests.getDailyJoke().then(result => {
+        this.dailyJoke = result.data
+    })
+    axios_requests.getGeneratedJoke().then(result => {
+        this.generatedJoke = result.data
+    })
   },
   data() {
     return {
-        jokeList: [{
-            id: 0,
-            text: "meloner",
-            rate: 1,
-            tags: ["poruchik Rzhevski", "Shtirlec"],
-            author_name: "Kostya",
-            date: "12.07.2022 14:48:12"
-        },{
-            id: 1,
-            text: "qwerty?",
-            rate: 2,
-            tags: [""],
-            author_name: "Igor",
-            date: "13.07.2022 13:37:51"
-        }],
-        dailyJoke: {
-            id: 2,
-            text: "Kolobok povesilsya)",
-            rate: 100,
-            tags: ["Kolobok"],
-            author_name: "A4",
-            date: "13.07.2022 09:12:18"
-        },
-        generatedJoke: {
-            id: 3,
-            text: "AHAHAHHAHAHAHAHAHAHAHAHAHAHAH)",
-            rate: 1,
-            tags: ["AI"],
-            author_name: "ruGPT-3 XL",
-            date: "12.07.2022 00:00:00"
-        },
-        authorName: 'Kostya'
+        jokeList: [],
+        dailyJoke: {},
+        generatedJoke: {},
+        authorName: 'Kostya',
     }
   },
   methods: {
@@ -219,7 +197,7 @@ export default {
         color: white;
         font-size: 13px;
         font-weight: bold;
-        margin-left: 10px;
+        margin-left: 3px;
         position: relative;
         bottom: 3px;
     }
@@ -250,3 +228,37 @@ export default {
         width: 25%;
     }
 </style>
+
+
+<!-- {
+            id: 0,
+            text: "meloner",
+            rate: 1,
+            tags: ["poruchik Rzhevski", "Shtirlec"],
+            author_name: "Kostya",
+            date: "12.07.2022 14:48:12"
+        },{
+            id: 1,
+            text: "qwerty?",
+            rate: 2,
+            tags: [""],
+            author_name: "Igor",
+            date: "13.07.2022 13:37:51"
+        } -->
+        <!-- {
+            id: 2,
+            text: "Kolobok povesilsya)",
+            rate: 100,
+            tags: ["Kolobok"],
+            author_name: "A4",
+            date: "13.07.2022 09:12:18"
+        } -->
+
+        <!-- {
+            id: 3,
+            text: "AHAHAHHAHAHAHAHAHAHAHAHAHAHAH)",
+            rate: 1,
+            tags: ["AI"],
+            author_name: "ruGPT-3 XL",
+            date: "12.07.2022 00:00:00"
+        } -->

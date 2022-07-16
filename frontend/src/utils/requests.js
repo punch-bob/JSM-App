@@ -23,11 +23,29 @@ export const axios_requests = {
         })
     },
 
-    addJoke(data) {
+    getDailyJoke() {
+        return axios({
+            method: 'get',
+            url: SERVER_URL + '/daily_joke/'
+        })
+    },
+
+    getGeneratedJoke() {
+        return axios({
+            method: 'get',
+            url: SERVER_URL + '/generated_joke/'
+        })
+    },
+
+    createJoke(text, tags, author_name) {
         return axios({
             method: 'post',
-            url: SERVER_URL + '/joke/',
-            data: data
+            url: SERVER_URL + '/create_joke/',
+            data: {
+                text: text,
+                tags: tags.split(' '),
+                author_name: author_name
+            }
         })
     }
 }
