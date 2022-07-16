@@ -1,6 +1,7 @@
 package main
 
 import (
+	"log"
 	"sync"
 	"time"
 )
@@ -109,14 +110,16 @@ func (js *JokesStore) GetDailyJoke() Joke {
 
 	var dailyJoke Joke
 
-	yesterday := time.Now().Add(-24 * time.Hour)
+	today := time.Now()
+	today = time.Date(today.Year(), today.Month(), today.Day(), 0, 0, 0, 0, today.Location())
 	const MaxInt = int(^uint(0) >> 1)
 	maxRate := -MaxInt - 1
 
 	for _, joke := range js.Store {
 		jokeDate := joke.Date
-		dif := yesterday.Sub(jokeDate)
-		if dif <= 24*time.Hour && joke.Rating > maxRate {
+		dif := today.Sub(jokeDate)
+		log.Println(joke.Id, dif)
+		if joke.Rating > maxRate && 0 < dif && dif < 24*time.Hour {
 			dailyJoke = joke
 			maxRate = joke.Rating
 		}
