@@ -6,28 +6,30 @@ import (
 )
 
 type Joke struct {
-	Id         int      `json:"id"`
-	Text       string   `json:"text"`
-	Rating     int      `json:"rate"`
-	Tags       []string `json:"tags"`
-	AuthorName string   `json:"author_name"`
-	Date       string   `json:"date"`
+	Id         int       `json:"id"`
+	Text       string    `json:"text"`
+	Rating     int       `json:"rate"`
+	Tags       []string  `json:"tags"`
+	AuthorName string    `json:"author_name"`
+	Date       time.Time `json:"date"`
 }
 
 type JokesStore struct {
 	Store map[int]Joke
 	sync.Mutex
-	CurId int
+	CurId           int
+	GeneratedJokeId int
 }
 
 func NewJokesStore() *JokesStore {
 	jokesStore := &JokesStore{}
 	jokesStore.CurId = 0
 	jokesStore.Store = make(map[int]Joke)
+	jokesStore.GeneratedJokeId = -1
 	return jokesStore
 }
 
-func (js *JokesStore) CreateJoke(text string, tags []string, authorName string) {
+func (js *JokesStore) CreateJoke(text string, tags []string, authorName string) int {
 	js.Lock()
 	defer js.Unlock()
 
@@ -36,12 +38,13 @@ func (js *JokesStore) CreateJoke(text string, tags []string, authorName string) 
 		Text:       text,
 		Rating:     0,
 		AuthorName: authorName,
-		Date:       time.Now().Format("2022.07.12 15:04:05")}
+		Date:       time.Now()}
 	joke.Tags = make([]string, len(tags))
 	copy(joke.Tags, tags)
 
 	js.Store[js.CurId] = joke
 	js.CurId++
+	return joke.Id
 }
 
 func (js *JokesStore) IncreaseRating(id int) int {
@@ -87,10 +90,40 @@ jokeloop:
 }
 
 func (js *JokesStore) GetAllJokes() []Joke {
+	js.Lock()
+	defer js.Unlock()
+
 	jokes := make([]Joke, 0, len(js.Store))
 
-	for _, joke := range js.Store {
-		jokes = append(jokes, joke)
+	for id, joke := range js.Store {
+		if id != js.GeneratedJokeId {
+			jokes = append(jokes, joke)
+		}
 	}
 	return jokes
+}
+
+func (js *JokesStore) GetDailyJoke() Joke {
+	js.Lock()
+	defer js.Unlock()
+
+	var dailyJoke Joke
+
+	yesterday := time.Now().Add(-24 * time.Hour)
+	const MaxInt = int(^uint(0) >> 1)
+	maxRate := -MaxInt - 1
+
+	for _, joke := range js.Store {
+		jokeDate := joke.Date
+		dif := yesterday.Sub(jokeDate)
+		if dif <= 24*time.Hour && joke.Rating > maxRate {
+			dailyJoke = joke
+			maxRate = joke.Rating
+		}
+	}
+	return dailyJoke
+}
+
+func (js *JokesStore) GetGeneratedJoke() Joke {
+	return js.Store[js.GeneratedJokeId]
 }

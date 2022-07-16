@@ -19,7 +19,9 @@
         </div>
     </div>
 </template>
+
 <script>
+import {axios_requests} from '../utils/requests.js'
 export default {
     props: ['authorName'],
     data() {
@@ -31,17 +33,19 @@ export default {
     },
     methods: {
         closePage: function () {
-            console.log(this.text)
             this.show = false
             this.text = ''
             this.tags = []
         },
         createJoke: function() {
-
+            axios_requests.createJoke(this.text, this.tags, this.authorName).then(() => {
+                this.closePage()
+            })
         }
     }
 }
 </script>
+
 <style>
     .creation-page {
         background: var(--header-color);

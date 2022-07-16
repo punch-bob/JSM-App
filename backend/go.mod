@@ -1,4 +1,4 @@
-module example.com
+module main
 
 go 1.18
 
