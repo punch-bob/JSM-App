@@ -21,7 +21,7 @@ func NewJokeServer() *JokeServer {
 	return &JokeServer{store: store}
 }
 
-func (server *JokeServer) JokeListHandler(write http.ResponseWriter, request *http.Request) {
+func (server *JokeServer) jokeListHandler(write http.ResponseWriter, request *http.Request) {
 	js, err := json.Marshal(server.store.GetAllJokes())
 	if err != nil {
 		http.Error(write, err.Error(), http.StatusInternalServerError)
@@ -33,7 +33,7 @@ func (server *JokeServer) JokeListHandler(write http.ResponseWriter, request *ht
 	write.Write(js)
 }
 
-func (server *JokeServer) UpdateJokeRatingHandler(write http.ResponseWriter, request *http.Request) {
+func (server *JokeServer) updateJokeRatingHandler(write http.ResponseWriter, request *http.Request) {
 	type RequestReact struct {
 		Id       int    `json:"id"`
 		Reaction string `json:"reaction"`
@@ -64,7 +64,7 @@ func (server *JokeServer) UpdateJokeRatingHandler(write http.ResponseWriter, req
 	write.Write(js)
 }
 
-func (server *JokeServer) GetDailyJokeHandler(write http.ResponseWriter, request *http.Request) {
+func (server *JokeServer) dailyJokeHandler(write http.ResponseWriter, request *http.Request) {
 	js, err := json.Marshal(server.store.GetDailyJoke())
 	if err != nil {
 		http.Error(write, err.Error(), http.StatusInternalServerError)
@@ -76,7 +76,7 @@ func (server *JokeServer) GetDailyJokeHandler(write http.ResponseWriter, request
 	write.Write(js)
 }
 
-func (server *JokeServer) GetGeneratedJokeHandler(write http.ResponseWriter, request *http.Request) {
+func (server *JokeServer) generatedJokeHandler(write http.ResponseWriter, request *http.Request) {
 	js, err := json.Marshal(server.store.GetGeneratedJoke())
 	if err != nil {
 		http.Error(write, err.Error(), http.StatusInternalServerError)
@@ -92,7 +92,7 @@ func (server *JokeServer) generateJoke() int {
 	rand.Seed(time.Now().UnixNano())
 
 	requestBody, err := json.Marshal(map[string]string{
-		"text": "girlfriend",
+		"text": "поручик Ржевский пришел к Штирлицу",
 	})
 	if err != nil {
 		log.Fatalln(err)
@@ -140,7 +140,7 @@ func (server *JokeServer) generateJoke() int {
 	return genJokeId
 }
 
-func (server *JokeServer) CreateJokeHandler(write http.ResponseWriter, request *http.Request) {
+func (server *JokeServer) createJokeHandler(write http.ResponseWriter, request *http.Request) {
 	type JokeLayout struct {
 		Text       string   `json:"text"`
 		Tags       []string `json:"tags"`
@@ -149,12 +149,38 @@ func (server *JokeServer) CreateJokeHandler(write http.ResponseWriter, request *
 
 	dec := json.NewDecoder(request.Body)
 	var jl JokeLayout
-	if err := dec.Decode(&jl); err != nil {
+	err := dec.Decode(&jl)
+	if err != nil {
 		http.Error(write, err.Error(), http.StatusBadRequest)
 		return
 	}
 
 	server.store.CreateJoke(jl.Text, jl.Tags, jl.AuthorName)
+}
+
+func (server *JokeServer) findJokeByTagsHendler(write http.ResponseWriter, request *http.Request) {
+	type RequestTemplate struct {
+		Tags []string `json:"tags"`
+	}
+
+	dec := json.NewDecoder(request.Body)
+	var rt RequestTemplate
+	err := dec.Decode(&rt)
+	if err != nil {
+		http.Error(write, err.Error(), http.StatusBadRequest)
+		return
+	}
+
+	jokeList := server.store.GetJokesByTags(rt.Tags)
+	js, err := json.Marshal(jokeList)
+	if err != nil {
+		http.Error(write, err.Error(), http.StatusInternalServerError)
+		return
+	}
+
+	write.Header().Set("Access-Control-Allow-Origin", "*")
+	write.Header().Set("Content-Type", "application/json")
+	write.Write(js)
 }
 
 func main() {
@@ -170,7 +196,7 @@ func main() {
 
 	var joke2 Joke
 	joke2.Id = 1
-	joke2.Text = "abbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb\naaaaaa\naaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+	joke2.Text = "тестbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb\naaaaaa\naaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
 	joke2.Rating = -10
 	joke2.Tags = make([]string, 3)
 	joke2.Tags[0] = "test2"
@@ -187,11 +213,12 @@ func main() {
 	server.store.CurId = 2
 	server.store.GeneratedJokeId = server.generateJoke()
 
-	router.HandleFunc("/joke_list/", server.JokeListHandler).Methods("GET")
-	router.HandleFunc("/update_rating/", server.UpdateJokeRatingHandler).Methods("POST")
-	router.HandleFunc("/daily_joke/", server.GetDailyJokeHandler).Methods("GET")
-	router.HandleFunc("/generated_joke/", server.GetGeneratedJokeHandler).Methods("GET")
-	router.HandleFunc("/create_joke/", server.CreateJokeHandler).Methods("POST")
+	router.HandleFunc("/joke_list/", server.jokeListHandler).Methods("GET")
+	router.HandleFunc("/update_rating/", server.updateJokeRatingHandler).Methods("POST")
+	router.HandleFunc("/daily_joke/", server.dailyJokeHandler).Methods("GET")
+	router.HandleFunc("/generated_joke/", server.generatedJokeHandler).Methods("GET")
+	router.HandleFunc("/create_joke/", server.createJokeHandler).Methods("POST")
+	router.HandleFunc("/joke_by_tags/", server.findJokeByTagsHendler).Methods("POST")
 
 	//Header sets
 	headersOk := handlers.AllowedHeaders([]string{"Accept", "Accept-Language", "Content-Type", "Content-Language", "Origin"})
