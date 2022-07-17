@@ -47,5 +47,16 @@ export const axios_requests = {
                 author_name: author_name
             }
         })
+    },
+
+    getJokesByTags(tags)
+    {
+        return axios({
+            method: 'post',
+            url: SERVER_URL + '/joke_by_tags/',
+            data: {
+                tags: tags.split(' ')
+            }
+        })
     }
 }

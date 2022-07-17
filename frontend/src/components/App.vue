@@ -15,14 +15,19 @@
                     <button @click="showAuthPage" class="reg-btn">Sign In</button>
                     <button @click="showLogUpPage" class="reg-btn">Sign Up</button>
                 </div>
+
+                <div class="acc-data" v-else>
+                    <span class="user-name">{{authorName}}</span>
+                    <button class="reg-btn">Log Out</button>
+                </div>
             </div>
         </header>
 
         <div class="content">
             <div class="joke-manage">
                 <p class="site-header">Find by Tags:</p>
-                <input class="joke-search" type="text" placeholder="Enter tags:">
-                <button class="search-btn">Find</button><br><br>
+                <input class="joke-search" type="text" placeholder="Enter tags:" v-model="tags">
+                <button @click="findJokesByTags" class="search-btn">Find</button><br><br>
                 <span class="site-header">Create new joke:</span>
                 <button class="create-joke-btn" @click="showJokeCreationPage">Add new</button>
             </div>
@@ -78,6 +83,7 @@ export default {
         dailyJoke: {},
         generatedJoke: {},
         authorName: 'Kostya',
+        tags: ''
     }
   },
   methods: {
@@ -89,6 +95,11 @@ export default {
     },
     showJokeCreationPage: function() {
         this.$refs.jokeCreationPage.show = true
+    },
+    findJokesByTags: function() {
+        axios_requests.getJokesByTags(this.tags).then((result) => {
+            this.jokeList = result.data
+        })
     }
   }
 }
@@ -122,9 +133,24 @@ export default {
         color: var(--logo-color);
     }
 
+    .acc-data {
+        position: absolute;
+        right: 30px;
+        top: 10px;
+    }
+
+    .user-name {
+        font-size: 40px;
+        color: var(--logo-color);
+        font-weight: bold;
+        position: relative;
+        top: 8px;
+        margin-right: 20px;
+    }
+
     .reg-btns {
         position: absolute;
-        left: 84%;
+        left: 82%;
         top: 30%;
         display: flex
     }
@@ -137,9 +163,9 @@ export default {
         border-style: solid;
         border-color: var(--logo-color);
         color: var(--logo-color);
-        font-size: 15px;
+        font-size: 17px;
         font-weight: bold;
-        padding: 8px 16px;
+        padding: 8px 13px;
     }
 
     .reg-btn:hover {
