@@ -33,7 +33,15 @@
             </div>
 
             <div class="joke-line">
-                <JokeList v-bind:jokeList='jokeList'/>
+                <div v-if="showNewJokeList" class="found-jokes-bar">
+                    <button @click="backToMainLine" class="cancel-btn" id="found-bar">Cancel</button>
+                    <span class="site-header" id="found-bar-text">Found by tags:</span>
+                </div>
+
+                <JokeList v-if="jokeList !== null" v-bind:jokeList='jokeList'/>
+                <div v-else class="jokes-not-found">
+                    <span class="site-header" id="not-found-text">Jokes not found(</span> 
+                </div>
             </div>
 
             <div class="daily-jokes" id="daily-jokes">
@@ -83,22 +91,36 @@ export default {
         dailyJoke: {},
         generatedJoke: {},
         authorName: 'Kostya',
-        tags: ''
+        tags: '',
+        showNewJokeList: false
     }
   },
   methods: {
     showAuthPage: function() {
         this.$refs.authPage.show = true
     },
+
     showLogUpPage: function() {
         this.$refs.logUpPage.show = true
     },
+
     showJokeCreationPage: function() {
         this.$refs.jokeCreationPage.show = true
     },
+
     findJokesByTags: function() {
         axios_requests.getJokesByTags(this.tags).then((result) => {
             this.jokeList = result.data
+            console.log(this.jokeList)
+            this.showNewJokeList = true
+        })
+    },
+
+    backToMainLine: function() {
+        axios_requests.get().then(result => {
+            this.jokeList = result.data
+            this.tags = ''
+            this.showNewJokeList = false
         })
     }
   }
@@ -107,6 +129,10 @@ export default {
 
 
 <style>
+    ul {
+        padding: 0;
+    }
+
     .content {
         display: flex;
         height: 100%;
@@ -239,8 +265,9 @@ export default {
         margin-left: 40px;
         margin-right: 40px;
         margin-top: 20px;
-        width: 50%;
-        height: 100%;
+        min-width: 50%;
+        max-width: 50%;
+        min-height: 100%;
         
         vertical-align: top;
     }
@@ -249,9 +276,33 @@ export default {
         display: inline-block;
         height: 100%;
         vertical-align: top;
-        
         margin-top: 50px;
         width: 25%;
+    }
+
+    .found-jokes-bar {
+        display: flex;
+        border-radius: 10px;
+        background: var(--special-grey);
+        padding: 8px 8px;
+    }
+
+    #found-bar {
+        margin-right: 20px;
+        padding: 0 -1px;
+        font-size: 20px;
+    }
+
+    #found-bar-text {
+        margin-bottom: 0;
+        margin-top: 2px;
+    }
+
+    #not-found-text {
+        position: absolute;
+        top: 50%;
+        right: 38%;
+        font-size: 50px;
     }
 </style>
 
