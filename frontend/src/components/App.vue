@@ -38,7 +38,7 @@
                     <span class="site-header" id="found-bar-text">Found by tags:</span>
                 </div>
 
-                <JokeList v-if="jokeList !== null" v-bind:jokeList='jokeList'/>
+                <JokeList v-if="jokeList !== null" v-bind:jokeList='jokeList' v-bind:uid='uid'/>
                 <div v-else class="jokes-not-found">
                     <span class="site-header" id="not-found-text">Jokes not found(</span> 
                 </div>
@@ -52,7 +52,7 @@
             </div>
 
             <AuthPage ref="authPage"/>
-            <LogUpPage ref="logUpPage"/>
+            <LogUpPage @setUser="setUser($event)" :uid="uid" ref="logUpPage"/>
             <JokeCreationPage v-bind:authorName='authorName' ref="jokeCreationPage"/>
         </div>
     </div>
@@ -90,7 +90,8 @@ export default {
         jokeList: [],
         dailyJoke: {},
         generatedJoke: {},
-        authorName: 'Kostya',
+        authorName: '',
+        uid: -1,
         tags: '',
         showNewJokeList: false
     }
@@ -111,7 +112,6 @@ export default {
     findJokesByTags: function() {
         axios_requests.getJokesByTags(this.tags).then((result) => {
             this.jokeList = result.data
-            console.log(this.jokeList)
             this.showNewJokeList = true
         })
     },
@@ -122,6 +122,11 @@ export default {
             this.tags = ''
             this.showNewJokeList = false
         })
+    },
+
+    setUser: function(user) {
+        this.authorName = user.username
+        this.uid = user.uid
     }
   }
 }

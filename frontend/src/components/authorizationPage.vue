@@ -6,7 +6,7 @@
                 <h1 class="text">Log In</h1>
 
                 <div class="input-section">
-                    <input size="25" class="text-input" placeholder="Login">
+                    <input size="25" class="text-input" placeholder="Login" v-model="username">
                 </div>
 
                 <div class="input-section">
@@ -25,7 +25,7 @@
                 </div>
             </div>
 
-            <button class="login-btn">Log In</button>
+            <button class="login-btn" @click="tryLogIn">Log In</button>
             <output v-if="errorMessage !== ''" class="error-msg">{{errorMessage}}</output>
         </div>
     </div>
@@ -36,8 +36,10 @@ import {axios_requests} from '../utils/requests.js'
 export default {
     data() {
         return {
+            uid: -1,
             show: false,
-            errorMessage: 'some error',
+            errorMessage: '',
+            username: '',
             type: 'text',
             password: '',
             repeatPassword: '',
@@ -66,11 +68,22 @@ export default {
             this.password = ''
             this.repeatPassword = ''
             this.type = 'password'
+            this.errorMessage = ''
             this.imgIndex = 1
             this.image = this.images[0]
         },
         tryLogIn: function() {
-
+            if (this.password !== this.repeatPassword) {
+                this.errorMessage = "Passwords don't match!"
+                this.password = ''
+                this.repeatPassword = ''
+                return
+            }
+            axios_requests.auth(this.username, this.password).then((result) => {
+                this.uid = result.data.id
+                this.errorMessage = result.data.server_message
+                console.log(result.data)
+            })
         },
         switchImage: function() {
             this.image = this.images[this.imgIndex]

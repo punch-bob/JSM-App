@@ -23,12 +23,7 @@
 import TagsList from './tagsList.vue'
 import {axios_requests} from '../utils/requests.js'
 export default {
-    props: {
-        joke: {
-            type: Object,
-            required: true
-        }
-    },
+    props: ['joke', 'uid'],
     components: {
         TagsList
     },
@@ -40,13 +35,13 @@ export default {
     },
     methods: {
         increaseRating: function () {
-            axios_requests.updateRating(this.id, "increase").then(result => {
+            axios_requests.updateRating(this.uid, this.id, "increase").then(result => {
                 this.joke.rate = result.data
                 this.rating = result.data
             })
         },
         decreaseRating: function() {
-            axios_requests.updateRating(this.id, "decrease").then(result => {
+            axios_requests.updateRating(this.uid, this.id, "decrease").then(result => {
                 this.joke.rate = result.data
                 this.rating = result.data
             })

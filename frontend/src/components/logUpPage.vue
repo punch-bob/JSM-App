@@ -6,7 +6,7 @@
                 <h1 class="text">Log Up</h1>
 
                 <div class="input-section">
-                    <input size="25" class="text-input" placeholder="Login">
+                    <input size="25" class="text-input" placeholder="Login" v-model="user.username">
                 </div>
 
                 <div class="input-section">
@@ -17,7 +17,7 @@
                 </div>
             </div>
 
-            <button class="logup-btn">Log Up</button>
+            <button class="logup-btn" @click="tryLogUp">Log Up</button>
             <output v-if="errorMessage !== ''" class="error-msg">{{errorMessage}}</output>
             <span class="non-auth" @click=""><u>login</u></span>
         </div>
@@ -31,7 +31,11 @@ export default {
         return {
             show: false,
             errorMessage: '',
-            type: 'text',
+            type: 'password',
+            user: {
+                uid: -1,
+                username: ''
+            },
             password: '',
             imgIndex: 0,
             image: null,
@@ -61,11 +65,24 @@ export default {
             this.image = this.images[0]
         },
         tryLogUp: function() {
-
+            axios_requests.logUp(this.user.username, this.password).then((result) => {
+                if (result.data.server_message !== 'Ok') {
+                    this.errorMessage = result.data.server_message
+                    this.username = ''
+                    this.password = ''
+                } 
+                else {
+                    this.closePage()
+                    this.user.uid = result.data.id
+                    this.$emit('setUser', this.user)
+                    //this.authorName = this.username
+                    console.log(this.user.username, result.data.id)
+                }
+            })
         },
         switchImage: function() {
-            this.image = this.images[this.imgIndex]
             this.imgIndex = (this.imgIndex + 1) % this.images.length;
+            this.image = this.images[this.imgIndex]
             this.showPassword()
         },
         switchOnLoging: function() {

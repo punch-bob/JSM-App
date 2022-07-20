@@ -12,11 +12,12 @@ export const axios_requests = {
         })
     },
     
-    updateRating(id, reaction) {
+    updateRating(uid, id, reaction) {
         return axios({
             method: 'post',
             url: SERVER_URL + '/update_rating/',
             data: {
+                uid: uid,
                 id: id,
                 reaction: reaction
             }
@@ -56,6 +57,28 @@ export const axios_requests = {
             url: SERVER_URL + '/joke_by_tags/',
             data: {
                 tags: tags.split(' ')
+            }
+        })
+    },
+
+    auth(name, password) {
+        return axios({
+            method: 'post',
+            url: AUTH_SERVER_URL + '/authorization/',
+            data: {
+                name: name,
+                password: password
+            }
+        })
+    },
+
+    logUp(name, password) {
+        return axios({
+            method: 'post',
+            url: AUTH_SERVER_URL + '/log_up/',
+            data: {
+                name: name,
+                password: password
             }
         })
     }
