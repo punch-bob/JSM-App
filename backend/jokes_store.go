@@ -1,18 +1,18 @@
 package main
 
 import (
-	"log"
 	"sync"
 	"time"
 )
 
 type Joke struct {
-	Id         int       `json:"id"`
-	Text       string    `json:"text"`
-	Rating     int       `json:"rate"`
-	Tags       []string  `json:"tags"`
-	AuthorName string    `json:"author_name"`
-	Date       time.Time `json:"date"`
+	Id         int           `json:"id"`
+	Text       string        `json:"text"`
+	Rating     int           `json:"rate"`
+	Tags       []string      `json:"tags"`
+	AuthorName string        `json:"author_name"`
+	Date       time.Time     `json:"date"`
+	WhoRated   map[int]uint8 `json:"who_rated"`
 }
 
 type JokesStore struct {
@@ -30,7 +30,7 @@ func NewJokesStore() *JokesStore {
 	return jokesStore
 }
 
-func (js *JokesStore) CreateJoke(text string, tags []string, authorName string) int {
+func (js *JokesStore) CreateJoke(text string, tags []string, authorName string) Joke {
 	js.Lock()
 	defer js.Unlock()
 
@@ -39,34 +39,51 @@ func (js *JokesStore) CreateJoke(text string, tags []string, authorName string) 
 		Text:       text,
 		Rating:     0,
 		AuthorName: authorName,
-		Date:       time.Now()}
+		Date:       time.Now(),
+		WhoRated:   make(map[int]uint8)}
 	joke.Tags = make([]string, len(tags))
 	copy(joke.Tags, tags)
 
 	js.Store[js.CurId] = joke
 	js.CurId++
-	return joke.Id
+	return joke
 }
 
-func (js *JokesStore) IncreaseRating(id int) int {
+func (js *JokesStore) IncreaseRating(uid, id int) int {
 	js.Lock()
 	defer js.Unlock()
 
 	joke := js.Store[id]
-	joke.Rating++
-	js.Store[id] = joke
+	if val, ok := joke.WhoRated[uid]; ok {
+		if val == 2 {
+			return joke.Rating
+		}
+	} else {
+		joke.WhoRated[uid] = 1
+	}
 
+	joke.Rating++
+	joke.WhoRated[uid]++
+	js.Store[id] = joke
 	return joke.Rating
 }
 
-func (js *JokesStore) DecreaseRating(id int) int {
+func (js *JokesStore) DecreaseRating(uid, id int) int {
 	js.Lock()
 	defer js.Unlock()
 
 	joke := js.Store[id]
-	joke.Rating--
-	js.Store[id] = joke
+	if val, ok := joke.WhoRated[uid]; ok {
+		if val == 0 {
+			return joke.Rating
+		}
+	} else {
+		joke.WhoRated[uid] = 1
+	}
 
+	joke.Rating--
+	joke.WhoRated[uid]--
+	js.Store[id] = joke
 	return joke.Rating
 }
 
@@ -118,7 +135,6 @@ func (js *JokesStore) GetDailyJoke() Joke {
 	for _, joke := range js.Store {
 		jokeDate := joke.Date
 		dif := today.Sub(jokeDate)
-		log.Println(joke.Id, dif)
 		if joke.Rating > maxRate && 0 < dif && dif < 24*time.Hour {
 			dailyJoke = joke
 			maxRate = joke.Rating

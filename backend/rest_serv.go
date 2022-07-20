@@ -2,23 +2,35 @@ package main
 
 import (
 	"bytes"
+	"database/sql"
 	"encoding/json"
 	"log"
 	"math/rand"
 	"net/http"
+	"os"
 	"time"
 
+	_ "github.com/go-sql-driver/mysql"
 	"github.com/gorilla/handlers"
 	"github.com/gorilla/mux"
 )
 
 type JokeServer struct {
 	store *JokesStore
+	db    *sql.DB
 }
 
 func NewJokeServer() *JokeServer {
 	store := NewJokesStore()
-	return &JokeServer{store: store}
+	dataSourceName := os.Getenv("DB_LOGIN") + ":" + os.Getenv("DB_PASSWORD") + "@/" + os.Getenv("DB_NAME")
+	db, err := sql.Open("mysql", dataSourceName)
+	if err != nil {
+		panic(err)
+	}
+	return &JokeServer{
+		store: store,
+		db:    db,
+	}
 }
 
 func (server *JokeServer) jokeListHandler(write http.ResponseWriter, request *http.Request) {
@@ -35,6 +47,7 @@ func (server *JokeServer) jokeListHandler(write http.ResponseWriter, request *ht
 
 func (server *JokeServer) updateJokeRatingHandler(write http.ResponseWriter, request *http.Request) {
 	type RequestReact struct {
+		Uid      int    `json:"uid"`
 		Id       int    `json:"id"`
 		Reaction string `json:"reaction"`
 	}
@@ -45,12 +58,13 @@ func (server *JokeServer) updateJokeRatingHandler(write http.ResponseWriter, req
 		http.Error(write, err.Error(), http.StatusBadRequest)
 		return
 	}
+	log.Println(rr)
 
 	var jokeRating int
 	if rr.Reaction == "increase" {
-		jokeRating = server.store.IncreaseRating(rr.Id)
+		jokeRating = server.store.IncreaseRating(rr.Uid, rr.Id)
 	} else if rr.Reaction == "decrease" {
-		jokeRating = server.store.DecreaseRating(rr.Id)
+		jokeRating = server.store.DecreaseRating(rr.Uid, rr.Id)
 	}
 
 	js, err := json.Marshal(jokeRating)
@@ -135,9 +149,9 @@ func (server *JokeServer) generateJoke() int {
 
 	jokeText := airesp.Predictions
 	tags := []string{"AI"}
-	genJokeId := server.store.CreateJoke(string(jokeText), tags, "ruGPT-3 XL")
+	genJoke := server.store.CreateJoke(string(jokeText), tags, "ruGPT-3 XL")
 
-	return genJokeId
+	return genJoke.Id
 }
 
 func (server *JokeServer) createJokeHandler(write http.ResponseWriter, request *http.Request) {
@@ -155,7 +169,15 @@ func (server *JokeServer) createJokeHandler(write http.ResponseWriter, request *
 		return
 	}
 
-	server.store.CreateJoke(jl.Text, jl.Tags, jl.AuthorName)
+	js, err := json.Marshal(server.store.CreateJoke(jl.Text, jl.Tags, jl.AuthorName))
+	if err != nil {
+		http.Error(write, err.Error(), http.StatusInternalServerError)
+		return
+	}
+
+	write.Header().Set("Access-Control-Allow-Origin", "*")
+	write.Header().Set("Content-Type", "application/json")
+	write.Write(js)
 }
 
 func (server *JokeServer) findJokeByTagsHendler(write http.ResponseWriter, request *http.Request) {
@@ -184,6 +206,7 @@ func (server *JokeServer) findJokeByTagsHendler(write http.ResponseWriter, reque
 }
 
 func main() {
+	log.Println("start")
 	var joke1 Joke
 	joke1.Id = 0
 	joke1.Text = "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\naaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
@@ -193,6 +216,7 @@ func main() {
 	joke1.Tags[1] = "test1"
 	joke1.AuthorName = "champ"
 	joke1.Date = time.Now().Add(-24 * time.Hour)
+	joke1.WhoRated = make(map[int]uint8)
 
 	var joke2 Joke
 	joke2.Id = 1
@@ -204,9 +228,11 @@ func main() {
 	joke2.Tags[2] = "test4"
 	joke2.AuthorName = "loser"
 	joke2.Date = time.Now().Add(-24 * time.Hour)
+	joke2.WhoRated = make(map[int]uint8)
 
 	router := mux.NewRouter()
 	server := NewJokeServer()
+	defer server.db.Close()
 
 	server.store.Store[0] = joke1
 	server.store.Store[1] = joke2
@@ -225,5 +251,6 @@ func main() {
 	originsOk := handlers.AllowedOrigins([]string{"*"})
 	methodsOk := handlers.AllowedMethods([]string{"GET", "POST", "DELETE", "HEAD", "PUT", "OPTIONS"})
 
+	// http.ListenAndServe(os.Getenv("SERVER_PORT"), handlers.CORS(headersOk, originsOk, methodsOk)(router))
 	http.ListenAndServe(":8080", handlers.CORS(headersOk, originsOk, methodsOk)(router))
 }
