@@ -1,7 +1,7 @@
 <template>
     <div>
         <ul>
-            <Joke v-for="joke of sortedJokes" v-bind:joke="joke" v-bind="uid"/>
+            <Joke v-for="joke of sortedJokes" v-bind:joke="joke" v-bind:uid="uid"/>
         </ul>
     </div>
 </template>

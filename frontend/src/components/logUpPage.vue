@@ -75,8 +75,6 @@ export default {
                     this.closePage()
                     this.user.uid = result.data.id
                     this.$emit('setUser', this.user)
-                    //this.authorName = this.username
-                    console.log(this.user.username, result.data.id)
                 }
             })
         },

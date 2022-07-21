@@ -35,12 +35,18 @@ export default {
     },
     methods: {
         increaseRating: function () {
+            if (this.uid < 0) {
+                return
+            }
             axios_requests.updateRating(this.uid, this.id, "increase").then(result => {
                 this.joke.rate = result.data
                 this.rating = result.data
             })
         },
         decreaseRating: function() {
+            if (this.uid < 0) {
+                return
+            }
             axios_requests.updateRating(this.uid, this.id, "decrease").then(result => {
                 this.joke.rate = result.data
                 this.rating = result.data

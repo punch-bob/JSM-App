@@ -18,7 +18,7 @@
 
                 <div class="acc-data" v-else>
                     <span class="user-name">{{authorName}}</span>
-                    <button class="reg-btn">Log Out</button>
+                    <button class="reg-btn" @click="logOut">Log Out</button>
                 </div>
             </div>
         </header>
@@ -51,8 +51,8 @@
                 <Joke v-bind:joke="generatedJoke"/>
             </div>
 
-            <AuthPage ref="authPage"/>
-            <LogUpPage @setUser="setUser($event)" :uid="uid" ref="logUpPage"/>
+            <AuthPage @setUser="setUser" ref="authPage"/>
+            <LogUpPage @setUser="setUser" ref="logUpPage"/>
             <JokeCreationPage v-bind:authorName='authorName' ref="jokeCreationPage"/>
         </div>
     </div>
@@ -85,6 +85,16 @@ export default {
         this.generatedJoke = result.data
     })
   },
+
+  mounted() {
+    if (localStorage.authorName) {
+        this.authorName = localStorage.authorName
+    }
+    if (localStorage.uid) {
+        this.uid = localStorage.uid
+    }
+  },
+
   data() {
     return {
         jokeList: [],
@@ -125,8 +135,15 @@ export default {
     },
 
     setUser: function(user) {
-        this.authorName = user.username
-        this.uid = user.uid
+        localStorage.authorName = this.authorName = user.username
+        localStorage.uid = this.uid = user.uid
+    },
+
+    logOut: function() {
+        localStorage.removeItem('authorName')
+        localStorage.removeItem('uid')
+        this.authorName = ''
+        this.uid = -1
     }
   }
 }

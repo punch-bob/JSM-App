@@ -210,7 +210,7 @@ func main() {
 	var server AuthServer
 	var err error
 	// dataSourceName := os.Getenv("DB_LOGIN") + ":" + os.Getenv("DB_PASSWORD") + "@/" + os.Getenv("DB_NAME")
-	dataSourceName := "root:password@/account_db"
+	dataSourceName := "root:Vaka2212!@/account_db"
 	server.db, err = sql.Open("mysql", dataSourceName)
 	if err != nil {
 		panic(err)

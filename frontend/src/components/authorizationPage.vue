@@ -36,7 +36,6 @@ import {axios_requests} from '../utils/requests.js'
 export default {
     data() {
         return {
-            uid: -1,
             show: false,
             errorMessage: '',
             username: '',
@@ -80,9 +79,19 @@ export default {
                 return
             }
             axios_requests.auth(this.username, this.password).then((result) => {
-                this.uid = result.data.id
-                this.errorMessage = result.data.server_message
-                console.log(result.data)
+                if (result.data.server_message !== 'Ok') {
+                    this.errorMessage = result.data.server_message
+                    this.password = ''
+                    this.repeatPassword = ''
+                } else {
+                    this.errorMessage = ''
+                    const user = {
+                        username: this.username,
+                        uid: result.data.id
+                    }
+                    this.$emit('setUser', user)
+                } 
+                this.closePage()
             })
         },
         switchImage: function() {
