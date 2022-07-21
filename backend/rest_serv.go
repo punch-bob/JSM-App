@@ -2,12 +2,10 @@ package main
 
 import (
 	"bytes"
-	"database/sql"
 	"encoding/json"
 	"log"
 	"math/rand"
 	"net/http"
-	"os"
 	"time"
 
 	_ "github.com/go-sql-driver/mysql"
@@ -17,19 +15,30 @@ import (
 
 type JokeServer struct {
 	store *JokesStore
-	db    *sql.DB
 }
+
+var jokeThemes = []string{"1 апреля", "14 февраля", "23 февраля", "8 марта", "Абрамович",
+	"Адам и Ева", "армянское радио", "Баба-Яга", "Березовский", "Билл Гейтс", "блондинки", "богатыри", "Брежнев",
+	"британские ученые", "Буратино", "Валуев", "веган", "Винни-Пух", "вовочка",
+	"немец, американец и русский", "гаи", "геи", "девушки", "Дед Мороз", "Донцова",
+	"золотая рыбка", "Иван-царевич", "Искусственный интеллект", "Каренина",
+	"Карлсон", "Колобок", "Красная Шапочка", "чиновник", "Илон Маск", "Кот Шрёдингера",
+	"Куклачев", "милиция", "Мавроди", "муж и жена", "Навальный",
+	"наркоман Павлик", "новые русские", "Обама", "Перельман", "случай в поезде",
+	"программист", "Прохоров", "Пушкин", "Рабинович", "поручик Ржевский",
+	"сантехник", "сбербанк", "Сталин",
+	"студент и профессор", "Сусанин", "тёща", "Трамп", "Чак Норрис",
+	"Чапаев", "Чебурашка и корокодил Гена", "чукча", "Шерлок Холмс", "Штирлиц"}
+
+var jokeAction = []string{"шел как-то по лесу", "встретил НЛО", "оказался в тылу", "зашел в бар", "выстрелил в ногу",
+	"сел в машину", "прибежал домой и  увидел там", "забежал в ванную", "попал в плен", "уходил от погони", "играли в нарды",
+	"зашли как-то в лифт", "выпили по стакану пива", "Неожиданно в баре материализуется",
+	"В белом плаще с кровавым подбоем, шаркающей кавалерийской походкой заходит в бар", "собрались на рыбалку", "ограбили"}
 
 func NewJokeServer() *JokeServer {
 	store := NewJokesStore()
-	dataSourceName := os.Getenv("DB_LOGIN") + ":" + os.Getenv("DB_PASSWORD") + "@/" + os.Getenv("DB_NAME")
-	db, err := sql.Open("mysql", dataSourceName)
-	if err != nil {
-		panic(err)
-	}
 	return &JokeServer{
 		store: store,
-		db:    db,
 	}
 }
 
@@ -105,8 +114,9 @@ func (server *JokeServer) generatedJokeHandler(write http.ResponseWriter, reques
 func (server *JokeServer) generateJoke() int {
 	rand.Seed(time.Now().UnixNano())
 
+	reqText := jokeThemes[rand.Intn(len(jokeThemes))] + " " + jokeAction[rand.Intn(len(jokeAction))]
 	requestBody, err := json.Marshal(map[string]string{
-		"text": "поручик Ржевский пришел к Штирлицу",
+		"text": reqText,
 	})
 	if err != nil {
 		log.Fatalln(err)
@@ -149,9 +159,9 @@ func (server *JokeServer) generateJoke() int {
 
 	jokeText := airesp.Predictions
 	tags := []string{"AI"}
-	genJoke := server.store.CreateJoke(string(jokeText), tags, "ruGPT-3 XL")
+	genJokeId := server.store.CreateJoke(string(jokeText), tags, "ruGPT-3 XL")
 
-	return genJoke.Id
+	return genJokeId
 }
 
 func (server *JokeServer) createJokeHandler(write http.ResponseWriter, request *http.Request) {
@@ -216,7 +226,6 @@ func main() {
 	joke1.Tags[1] = "test1"
 	joke1.AuthorName = "champ"
 	joke1.Date = time.Now().Add(-24 * time.Hour)
-	joke1.WhoRated = make(map[int]uint8)
 
 	var joke2 Joke
 	joke2.Id = 1
@@ -228,15 +237,13 @@ func main() {
 	joke2.Tags[2] = "test4"
 	joke2.AuthorName = "loser"
 	joke2.Date = time.Now().Add(-24 * time.Hour)
-	joke2.WhoRated = make(map[int]uint8)
 
 	router := mux.NewRouter()
 	server := NewJokeServer()
-	defer server.db.Close()
+	defer server.store.db.Close()
 
 	server.store.Store[0] = joke1
 	server.store.Store[1] = joke2
-	server.store.CurId = 2
 	server.store.GeneratedJokeId = server.generateJoke()
 
 	router.HandleFunc("/joke_list/", server.jokeListHandler).Methods("GET")
