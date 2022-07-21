@@ -127,6 +127,7 @@ func (server *AuthServer) AddUser(name, password string) (int, error) {
 		return -1, err
 	}
 
+	// res, err := server.db.Exec("insert into "+os.Getenv("DB_NAME")+"."+os.Getenv("TABLE_NAME")+" (username, password) values (?, ?)", name, hashedPassword)
 	res, err := server.db.Exec("insert into account_db.user (username, password) values (?, ?)", name, hashedPassword)
 	if err != nil {
 		log.Println(err)
@@ -197,12 +198,6 @@ func (server *AuthServer) LogUpHandler(write http.ResponseWriter, request *http.
 	write.Header().Set("Access-Control-Allow-Origin", "*")
 	write.Header().Set("Content-Type", "application/json")
 	write.Write(js)
-}
-
-func (server *AuthServer) Handler(write http.ResponseWriter, request *http.Request) {
-	write.Header().Set("Access-Control-Allow-Origin", "*")
-	write.Header().Set("Content-Type", "application/json")
-	//write.Write(js)
 }
 
 func main() {

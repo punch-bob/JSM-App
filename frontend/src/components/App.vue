@@ -38,7 +38,7 @@
                     <span class="site-header" id="found-bar-text">Found by tags:</span>
                 </div>
 
-                <JokeList v-if="jokeList !== null" v-bind:jokeList='jokeList' v-bind:uid='uid'/>
+                <JokeList v-if="jokeList !== null" v-bind:jokeList='jokeList'/>
                 <div v-else class="jokes-not-found">
                     <span class="site-header" id="not-found-text">Jokes not found(</span> 
                 </div>

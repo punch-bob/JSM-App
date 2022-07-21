@@ -38,7 +38,7 @@ export default {
             this.tags = []
         },
         createJoke: function() {
-            axios_requests.createJoke(this.text, this.tags, this.authorName).then((result) => {
+            axios_requests.createJoke(this.text, this.tags, this.authorName).then(() => {
                 this.closePage()
             })
         }

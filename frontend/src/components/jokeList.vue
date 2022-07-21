@@ -1,7 +1,7 @@
 <template>
     <div>
         <ul>
-            <Joke v-for="joke of sortedJokes" v-bind:joke="joke" v-bind:uid="uid"/>
+            <Joke v-for="joke of sortedJokes" v-bind:joke="joke"/>
         </ul>
     </div>
 </template>
@@ -9,7 +9,7 @@
 <script>
 import Joke from './joke.vue'
 export default {
-    props: ['jokeList', 'uid'],
+    props: ['jokeList'],
     components: {
         Joke
     },
