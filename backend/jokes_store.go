@@ -3,28 +3,27 @@ package main
 import (
 	"database/sql"
 	"log"
+	"strconv"
 	"sync"
 	"time"
 )
 
 type Joke struct {
-	Id         int       `json:"id"`
-	Text       string    `json:"text"`
-	Rating     int       `json:"rate"`
-	Tags       []string  `json:"tags"`
-	AuthorName string    `json:"author_name"`
-	Date       time.Time `json:"date"`
+	Id         int      `json:"id"`
+	Text       string   `json:"text"`
+	Rating     int      `json:"rate"`
+	Tags       []string `json:"tags"`
+	AuthorName string   `json:"author_name"`
+	Date       string   `json:"date"`
 }
 
 type JokesStore struct {
-	Store map[int]Joke
 	sync.Mutex
 	GeneratedJokeId int
 	db              *sql.DB
 }
 
 func NewJokesStore() *JokesStore {
-	Store := make(map[int]Joke)
 	GeneratedJokeId := -1
 	// dataSourceName := os.Getenv("DB_LOGIN") + ":" + os.Getenv("DB_PASSWORD") + "@/" + os.Getenv("DB_NAME")
 	dataSourceName := "root:password@/joke_db"
@@ -32,12 +31,23 @@ func NewJokesStore() *JokesStore {
 	if err != nil {
 		panic(err)
 	}
-	LoadJokesFromDB(Store, db)
 	return &JokesStore{
-		Store:           Store,
 		GeneratedJokeId: GeneratedJokeId,
 		db:              db,
 	}
+}
+
+func removeDuplicateValues(intSlice []int) []int {
+	keys := make(map[int]bool)
+	var list []int
+
+	for _, entry := range intSlice {
+		if _, value := keys[entry]; !value {
+			keys[entry] = true
+			list = append(list, entry)
+		}
+	}
+	return list
 }
 
 func LoadJokeTagsFromDB(id int, db *sql.DB) []string {
@@ -62,31 +72,48 @@ func LoadJokeTagsFromDB(id int, db *sql.DB) []string {
 	return tag
 }
 
-func LoadJokesFromDB(jokeStore map[int]Joke, db *sql.DB) {
+func GetJokeFromDB(db *sql.DB, id int) Joke {
+	// row := db.QueryRow("select * from " + os.Getenv("DB_NAME") + "."+os.Getenv("TABLE_NAME"))
+	row := db.QueryRow("select * from joke_db.joke where id = ?", id)
+	joke := Joke{}
+	err := row.Scan(&joke.Id, &joke.Text, &joke.Rating, &joke.AuthorName, &joke.Date)
+	if err != nil {
+		log.Println(err)
+	}
+	joke.Tags = LoadJokeTagsFromDB(id, db)
+	return joke
+}
+
+func ConvertRowToJoke(db *sql.DB, row *sql.Rows) Joke {
+	joke := Joke{}
+	err := row.Scan(&joke.Id, &joke.Text, &joke.Rating, &joke.AuthorName, &joke.Date)
+	if err != nil {
+		log.Println(err)
+	}
+	joke.Tags = LoadJokeTagsFromDB(joke.Id, db)
+	return joke
+}
+
+func LoadJokesFromDB(db *sql.DB) []Joke {
+	var jokeStore []Joke
 	// rows, err := db.Query("select * from "+os.Getenv("DB_NAME")+"."+os.Getenv("TABLE_NAME"))
 	rows, err := db.Query("select * from joke_db.joke")
 	if err != nil {
 		log.Println(err)
-		return
+		return nil
 	}
 	defer rows.Close()
 
 	for rows.Next() {
 		joke := Joke{}
-		var date string
-		err := rows.Scan(&joke.Id, &joke.Text, &joke.Rating, &joke.AuthorName, &date)
+		err := rows.Scan(&joke.Id, &joke.Text, &joke.Rating, &joke.AuthorName, &joke.Date)
 		if err != nil {
-			log.Println(err)
 			continue
 		}
-		joke.Date, err = time.Parse(time.RFC3339, date)
-		if err != nil {
-			log.Println(err)
-		}
 		joke.Tags = LoadJokeTagsFromDB(joke.Id, db)
-		jokeStore[joke.Id] = joke
+		jokeStore = append(jokeStore, joke)
 	}
-
+	return jokeStore
 }
 
 func (js *JokesStore) UpdateRatingInBD(id, rating int) {
@@ -112,7 +139,7 @@ func (js *JokesStore) AddJokeInDB(joke Joke) int {
 		text       = joke.Text
 		rating     = joke.Rating
 		authorName = joke.AuthorName
-		date       = joke.Date.Format(time.RFC3339)
+		date       = joke.Date
 	)
 	// res, err := js.db.Exec("insert into "+os.Getenv("DB_NAME")+"."+os.Getenv("TABLE_NAME")+" (text, rating, author_name, date) values (?, ?, ?, ?)", text, rating, authorName, date)
 	res, err := js.db.Exec("insert into joke_db.joke (text, rating, author_name, date) values (?, ?, ?, ?)", text, rating, authorName, date)
@@ -134,41 +161,34 @@ func (js *JokesStore) AddJokeInDB(joke Joke) int {
 }
 
 func (js *JokesStore) CreateJoke(text string, tags []string, authorName string) int {
-	js.Lock()
-	defer js.Unlock()
-
 	joke := Joke{
 		Id:         0,
 		Text:       text,
 		Rating:     0,
 		AuthorName: authorName,
-		Date:       time.Now()}
+		Date:       time.Now().Format("2006-01-02")}
 	joke.Tags = make([]string, len(tags))
 	copy(joke.Tags, tags)
 
-	js.AddJokeInDB(joke)
+	id := js.AddJokeInDB(joke)
 
-	js.Store[joke.Id] = joke
-	return joke.Id
+	return id
 }
 
 func (js *JokesStore) IncreaseRating(uid, id int) int {
-	js.Lock()
-	defer js.Unlock()
+	joke := GetJokeFromDB(js.db, id)
 
-	joke := js.Store[id]
 	// stmt, err := js.db.Prepare("select react from "+os.Getenv("DB_NAME")+"."+os.Getenv("TABLE_NAME")+" where joke_id = ? AND user_id = ?")
-	stmt, err := js.db.Prepare("select react from joke_bd.joke_rating where joke_id = ? AND user_id = ?")
+	stmt, err := js.db.Prepare("select react from joke_db.joke_rating where joke_id = ? AND user_id = ?")
 	if err != nil {
 		log.Println(err)
 	}
 	react := stmt.QueryRow(id, uid)
-	var value int
+	value := 1
 	err = react.Scan(&value)
 	if err == sql.ErrNoRows {
 		// js.db.Exec("insert into "+os.Getenv("DB_NAME")+"."+os.Getenv("TABLE_NAME")+" (joke_id, user_id, react) values (?, ?, ?)", id, uid, 1)
-		js.db.Exec("insert into joke_db.tag (joke_id, user_id, react) values (?, ?, ?)", id, uid, 1)
-		value = 1
+		js.db.Exec("insert into joke_db.joke_rating (joke_id, user_id, react) values (?, ?, ?)", id, uid, value)
 	}
 
 	if value == 2 {
@@ -178,7 +198,7 @@ func (js *JokesStore) IncreaseRating(uid, id int) int {
 	joke.Rating++
 	js.UpdateRatingInBD(id, joke.Rating)
 	js.UpdateReactInBD(uid, id, value+1)
-	js.Store[id] = joke
+	// js.Store[id] = joke
 	return joke.Rating
 }
 
@@ -186,19 +206,20 @@ func (js *JokesStore) DecreaseRating(uid, id int) int {
 	js.Lock()
 	defer js.Unlock()
 
-	joke := js.Store[id]
+	// joke := js.Store[id]
+	joke := GetJokeFromDB(js.db, id)
+
 	// stmt, err := js.db.Prepare("select react from "+os.Getenv("DB_NAME")+"."+os.Getenv("TABLE_NAME")+" where joke_id = ? AND user_id = ?")
-	stmt, err := js.db.Prepare("select react from joke_bd.joke_rating where joke_id = ? AND user_id = ?")
+	stmt, err := js.db.Prepare("select react from joke_db.joke_rating where joke_id = ? and user_id = ?")
 	if err != nil {
 		log.Println(err)
 	}
 	react := stmt.QueryRow(id, uid)
-	var value int
+	value := 1
 	err = react.Scan(&value)
 	if err == sql.ErrNoRows {
 		// js.db.Exec("insert into "+os.Getenv("DB_NAME")+"."+os.Getenv("TABLE_NAME")+" (joke_id, user_id, react) values (?, ?, ?)", id, uid, 1)
-		js.db.Exec("insert into joke_db.tag (joke_id, user_id, react) values (?, ?, ?)", id, uid, 1)
-		value = 1
+		js.db.Exec("insert into joke_db.joke_rating (joke_id, user_id, react) values (?, ?, ?)", id, uid, value)
 	}
 
 	if value == 0 {
@@ -208,8 +229,30 @@ func (js *JokesStore) DecreaseRating(uid, id int) int {
 	joke.Rating--
 	js.UpdateRatingInBD(id, joke.Rating)
 	js.UpdateReactInBD(uid, id, value-1)
-	js.Store[id] = joke
+	// js.Store[id] = joke
 	return joke.Rating
+}
+
+func GetJokeIdByTag(db *sql.DB, tag string) []int {
+	var jokeId []int
+
+	// jokes, err := js.db.Query("select joke_id from "+os.Getenv("DB_NAME")+"."+os.Getenv("TABLE_NAME")+"where tag = ?", tag)
+	rows, err := db.Query("select joke_id from joke_db.tag where tag = ?", tag)
+	if err != nil {
+		log.Println(err)
+	}
+	defer rows.Close()
+
+	for rows.Next() {
+		var value int
+		err = rows.Scan(&value)
+		if err != nil {
+			continue
+		}
+
+		jokeId = append(jokeId, value)
+	}
+	return jokeId
 }
 
 func (js *JokesStore) GetJokesByTags(tags []string) []Joke {
@@ -217,17 +260,15 @@ func (js *JokesStore) GetJokesByTags(tags []string) []Joke {
 	defer js.Unlock()
 
 	var jokes []Joke
+	var jokeId []int
 
-jokeloop:
-	for _, joke := range js.Store {
-		for _, jokeTag := range joke.Tags {
-			for _, tag := range tags {
-				if tag == jokeTag {
-					jokes = append(jokes, joke)
-					continue jokeloop
-				}
-			}
-		}
+	for _, tag := range tags {
+		jokeId = append(jokeId, GetJokeIdByTag(js.db, tag)...)
+		jokeId = removeDuplicateValues(jokeId)
+	}
+
+	for _, id := range jokeId {
+		jokes = append(jokes, GetJokeFromDB(js.db, id))
 	}
 	return jokes
 }
@@ -236,13 +277,7 @@ func (js *JokesStore) GetAllJokes() []Joke {
 	js.Lock()
 	defer js.Unlock()
 
-	jokes := make([]Joke, 0, len(js.Store))
-
-	for id, joke := range js.Store {
-		if id != js.GeneratedJokeId {
-			jokes = append(jokes, joke)
-		}
-	}
+	jokes := LoadJokesFromDB(js.db)
 	return jokes
 }
 
@@ -257,10 +292,20 @@ func (js *JokesStore) GetDailyJoke() Joke {
 	const MaxInt = int(^uint(0) >> 1)
 	maxRate := -MaxInt - 1
 
-	for _, joke := range js.Store {
+	// jokes, err := js.db.Query("select * from "+os.Getenv("DB_NAME")+"."+os.Getenv("TABLE_NAME"))
+	jokes, err := js.db.Query("select * from joke_db.joke")
+	if err != nil {
+		log.Println(err)
+	}
+	defer jokes.Close()
+
+	for jokes.Next() {
+		joke := ConvertRowToJoke(js.db, jokes)
 		jokeDate := joke.Date
-		dif := today.Sub(jokeDate)
-		if joke.Rating > maxRate && 0 < dif && dif < 24*time.Hour {
+		year, _ := strconv.Atoi(jokeDate[:len(jokeDate)-6])
+		month, _ := strconv.Atoi(jokeDate[len(jokeDate)-5 : len(jokeDate)-3])
+		day, _ := strconv.Atoi(jokeDate[len(jokeDate)-2:])
+		if joke.Rating > maxRate && today.Year() == year && int(today.Month()) == month && (today.Day()-day) == 1 {
 			dailyJoke = joke
 			maxRate = joke.Rating
 		}
@@ -269,5 +314,5 @@ func (js *JokesStore) GetDailyJoke() Joke {
 }
 
 func (js *JokesStore) GetGeneratedJoke() Joke {
-	return js.Store[js.GeneratedJokeId]
+	return GetJokeFromDB(js.db, js.GeneratedJokeId)
 }

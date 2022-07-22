@@ -32,8 +32,8 @@ var jokeThemes = []string{"1 апреля", "14 февраля", "23 февра�
 
 var jokeAction = []string{"шел как-то по лесу", "встретил НЛО", "оказался в тылу", "зашел в бар", "выстрелил в ногу",
 	"сел в машину", "прибежал домой и  увидел там", "забежал в ванную", "попал в плен", "уходил от погони", "играли в нарды",
-	"зашли как-то в лифт", "выпили по стакану пива", "Неожиданно в баре материализуется",
-	"В белом плаще с кровавым подбоем, шаркающей кавалерийской походкой заходит в бар", "собрались на рыбалку", "ограбили"}
+	"зашли как-то в лифт", "выпили по стакану пива", "неожиданно в баре материализуется",
+	"в белом плаще с кровавым подбоем, шаркающей кавалерийской походкой заходит в бар", "собрались на рыбалку", "ограбили"}
 
 func NewJokeServer() *JokeServer {
 	store := NewJokesStore()
@@ -67,7 +67,6 @@ func (server *JokeServer) updateJokeRatingHandler(write http.ResponseWriter, req
 		http.Error(write, err.Error(), http.StatusBadRequest)
 		return
 	}
-	log.Println(rr)
 
 	var jokeRating int
 	if rr.Reaction == "increase" {
@@ -217,33 +216,11 @@ func (server *JokeServer) findJokeByTagsHendler(write http.ResponseWriter, reque
 
 func main() {
 	log.Println("start")
-	var joke1 Joke
-	joke1.Id = 0
-	joke1.Text = "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\naaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
-	joke1.Rating = 10
-	joke1.Tags = make([]string, 2)
-	joke1.Tags[0] = "test"
-	joke1.Tags[1] = "test1"
-	joke1.AuthorName = "champ"
-	joke1.Date = time.Now().Add(-24 * time.Hour)
-
-	var joke2 Joke
-	joke2.Id = 1
-	joke2.Text = "тестbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb\naaaaaa\naaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
-	joke2.Rating = -10
-	joke2.Tags = make([]string, 3)
-	joke2.Tags[0] = "test2"
-	joke2.Tags[1] = "test3"
-	joke2.Tags[2] = "test4"
-	joke2.AuthorName = "loser"
-	joke2.Date = time.Now().Add(-24 * time.Hour)
 
 	router := mux.NewRouter()
 	server := NewJokeServer()
 	defer server.store.db.Close()
 
-	server.store.Store[0] = joke1
-	server.store.Store[1] = joke2
 	server.store.GeneratedJokeId = server.generateJoke()
 
 	router.HandleFunc("/joke_list/", server.jokeListHandler).Methods("GET")
@@ -259,5 +236,5 @@ func main() {
 	methodsOk := handlers.AllowedMethods([]string{"GET", "POST", "DELETE", "HEAD", "PUT", "OPTIONS"})
 
 	// http.ListenAndServe(os.Getenv("SERVER_PORT"), handlers.CORS(headersOk, originsOk, methodsOk)(router))
-	http.ListenAndServe(":8080", handlers.CORS(headersOk, originsOk, methodsOk)(router))
+	http.ListenAndServe(":8081", handlers.CORS(headersOk, originsOk, methodsOk)(router))
 }
