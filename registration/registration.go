@@ -107,16 +107,16 @@ func (server *AuthServer) CheckUserPassword(username, password string) (int, boo
 
 func (server *AuthServer) AddUser(name, password string) (int, error) {
 	if !checkPasswordValidation(password) {
-		return -1, fmt.Errorf("Your password is invalid")
+		return -1, fmt.Errorf("your password is invalid")
 	}
 
 	passLevel := checkPasswordStrength(password)
 	if passLevel <= 2 {
-		return -1, fmt.Errorf("Your password is weak: %d level of 4", passLevel)
+		return -1, fmt.Errorf("your password is weak: %d level of 4", passLevel)
 	}
 
 	if !checkUsernameValidation(name) {
-		return -1, fmt.Errorf("Your username is invalid")
+		return -1, fmt.Errorf("your username is invalid")
 	}
 
 	tmp := []byte(password)
