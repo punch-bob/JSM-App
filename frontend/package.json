@@ -11,7 +11,8 @@
     "cors": "^2.8.5",
     "qs": "^6.11.0",
     "vue": "^3.2.37",
-    "vue-observe-visibility": "^1.0.0"
+    "vue-observe-visibility": "^1.0.0",
+    "vue3-simple-alert": "^1.0.4"
   },
   "devDependencies": {
     "@vitejs/plugin-vue": "^2.3.3",
