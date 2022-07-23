@@ -18,8 +18,8 @@
             </div>
 
             <button class="logup-btn" @click="tryLogUp">Log Up</button>
-            <output v-if="errorMessage !== ''" class="error-msg">{{errorMessage}}</output>
-            <span class="non-auth" @click=""><u>login</u></span>
+            <output v-if="errorMessage !== ''" class="error-msg">{{ errorMessage }}</output>
+            <span class="non-auth" @click="openAuthPage"><u>login</u></span>
         </div>
     </div>
 </template>
@@ -83,8 +83,9 @@ export default {
             this.image = this.images[this.imgIndex]
             this.showPassword()
         },
-        switchOnLoging: function() {
-
+        openAuthPage: function() {
+            this.$emit('openAuthPage')
+            this.closePage()
         }
     },
     mounted() {

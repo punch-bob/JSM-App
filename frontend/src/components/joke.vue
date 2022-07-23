@@ -1,5 +1,5 @@
 <template>
-    <div class="joke-space">
+    <div v-if="show" class="joke-space">
         <!--Acc data-->
         <div class="joke-data">
             <img src="/public/clown-acc.svg" class="acc-avatar">
@@ -12,9 +12,10 @@
 
         <!--Rating-->
         <div class="rate-btns">
+            <button v-if="usersJoke" class="delete-btn" @click="deleteJoke">delete</button>
             <button @click="increaseRating"  class="rating-btn" id="up">+</button><br>
             <span class="rating" :style="{ color: rating > 0 ? 'var(--logo-color)' : 'var(--text-pink)'}">{{ rating }}</span><br>
-            <button @click="decreaseRating" class="rating-btn" id="down">-</button>
+            <button @click="decreaseRating" class="rating-btn" id="down">-</button>  
         </div>
     </div>
 </template>
@@ -29,32 +30,65 @@ export default {
     },
     data() {
         return {
-            id: this.joke.id,
-            rating: this.joke.rate
+            show: true,
+            rating: this.joke.rate,
+            usersJoke: false
+        }
+    },
+    mounted() {
+        if (localStorage.uid) {
+            if (parseInt(localStorage.uid) === this.joke.uid) {
+                this.usersJoke = true
+            }
         }
     },
     methods: {
         increaseRating: function () {
+            if (!localStorage.authorName) {
+                this.$emit('openLogUpPage')
+                return
+            }
             if (localStorage.uid) {
-                axios_requests.updateRating(parseInt(localStorage.uid), this.id, "increase").then(result => {
+                axios_requests.updateRating(parseInt(localStorage.uid), this.joke.id, "increase").then(result => {
                     this.joke.rate = result.data
                     this.rating = result.data
                 })
             }
             
         },
+
         decreaseRating: function() {
+            if (!localStorage.authorName) {
+                this.$emit('openLogUpPage')
+                return
+            }
             if (localStorage.uid) {
-                axios_requests.updateRating(parseInt(localStorage.uid), this.id, "decrease").then(result => {
+                axios_requests.updateRating(parseInt(localStorage.uid), this.joke.id, "decrease").then(result => {
                     this.joke.rate = result.data
                     this.rating = result.data
                 })
             }
+        },
+
+        deleteJoke: function() {
+            axios_requests.deleteJoke(this.joke.id).then(() => {
+                this.$emit('deleteJoke')
+                this.usersJoke = false
+            })
         }
     },
     computed: {
         formatedDate() {
             return this.joke.date.substring(0, 10).replaceAll('-', '.')
+        }
+    },
+    
+    updated() {
+        this.rating = this.joke.rate
+        if (localStorage.uid) {
+            if (parseInt(localStorage.uid) === this.joke.uid) {
+                this.usersJoke = true
+            }
         }
     }
 }
@@ -163,5 +197,25 @@ export default {
         display: table;
         margin: 0 auto;
         margin-top: -12px;
+    }
+
+    .delete-btn {
+        display: flex;
+        margin-bottom: 25px;
+        margin-left: 41px;
+        margin-top: -15px;
+
+        border-radius: 10px;
+        border-color: red;
+        background: red;
+        border-style: solid;
+        color: white;
+        cursor: pointer;
+    }
+
+    .delete-btn:hover {
+        color: red;
+        background: white;
+        font-size: 16px;
     }
 </style>

@@ -1,5 +1,5 @@
 <template>
-    <div v-if="show && authorName !== ''" class="page-background">
+    <div v-if="show" class="page-background">
         <div class="creation-page">
             <div class="creation">
                 <span class="creation-area-text">Your name:</span>
@@ -38,8 +38,9 @@ export default {
             this.tags = []
         },
         createJoke: function() {
-            axios_requests.createJoke(this.text, this.tags, this.authorName).then(() => {
+            axios_requests.createJoke(this.text, this.tags, this.authorName, parseInt(localStorage.uid)).then(() => {
                 this.closePage()
+                this.$emit('addJoke')
             })
         }
     }

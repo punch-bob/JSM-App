@@ -17,7 +17,7 @@
                 </div>
 
                 <div class="acc-data" v-else>
-                    <span class="user-name">{{authorName}}</span>
+                    <span @click="showUsersJokes" class="user-name">{{ authorName }}</span>
                     <button class="reg-btn" @click="logOut">Log Out</button>
                 </div>
             </div>
@@ -35,10 +35,10 @@
             <div class="joke-line">
                 <div v-if="showNewJokeList" class="found-jokes-bar">
                     <button @click="backToMainLine" class="cancel-btn" id="found-bar">Cancel</button>
-                    <span class="site-header" id="found-bar-text">Found by tags:</span>
+                    <span class="site-header" id="found-bar-text">Found jokes:</span>
                 </div>
 
-                <JokeList v-if="jokeList !== null" v-bind:jokeList='jokeList'/>
+                <JokeList v-if="jokeList !== null" v-bind:jokeList='jokeList' @deleteJoke='updateJokeList' @openLogUpPage='showLogUpPage'/>
                 <div v-else class="jokes-not-found">
                     <span class="site-header" id="not-found-text">Jokes not found(</span> 
                 </div>
@@ -52,8 +52,8 @@
             </div>
 
             <AuthPage @setUser="setUser" ref="authPage"/>
-            <LogUpPage @setUser="setUser" ref="logUpPage"/>
-            <JokeCreationPage v-bind:authorName='authorName' ref="jokeCreationPage"/>
+            <LogUpPage @setUser="setUser" @openAuthPage="showAuthPage" ref="logUpPage"/>
+            <JokeCreationPage v-bind:authorName='authorName' ref="jokeCreationPage" @addJoke="updateJokeList"/>
         </div>
     </div>
 </template>
@@ -91,7 +91,7 @@ export default {
         this.authorName = localStorage.authorName
     }
     if (localStorage.uid) {
-        this.uid = localStorage.uid
+        this.uid = parseInt(localStorage.uid)
     }
   },
 
@@ -101,7 +101,7 @@ export default {
         dailyJoke: {},
         generatedJoke: {},
         authorName: '',
-        uid: -1,
+        uid: -2,
         tags: '',
         showNewJokeList: false
     }
@@ -116,7 +116,19 @@ export default {
     },
 
     showJokeCreationPage: function() {
-        this.$refs.jokeCreationPage.show = true
+        if (this.authorName === '') {
+            this.showLogUpPage()
+        } else {
+            this.$refs.jokeCreationPage.show = true
+        }
+        
+    },
+
+    showUsersJokes: function() {
+        axios_requests.getJokesByUID(parseInt(localStorage.uid)).then((result) => {
+            this.jokeList = result.data
+            this.showNewJokeList = true
+        })
     },
 
     findJokesByTags: function() {
@@ -136,14 +148,21 @@ export default {
 
     setUser: function(user) {
         localStorage.authorName = this.authorName = user.username
-        localStorage.uid = this.uid = user.uid
+        localStorage.uid = user.uid
+        this.uid = parseInt(localStorage.uid)
     },
 
     logOut: function() {
         localStorage.removeItem('authorName')
         localStorage.removeItem('uid')
         this.authorName = ''
-        this.uid = -1
+        this.uid = -2
+    },
+
+    updateJokeList: function() {
+        axios_requests.get().then(result => {
+        this.jokeList = result.data
+    })
     }
   }
 }
@@ -194,6 +213,7 @@ export default {
         position: relative;
         top: 8px;
         margin-right: 20px;
+        cursor: pointer;
     }
 
     .reg-btns {
