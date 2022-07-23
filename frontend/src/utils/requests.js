@@ -38,14 +38,15 @@ export const axios_requests = {
         })
     },
 
-    createJoke(text, tags, author_name) {
+    createJoke(text, tags, author_name, uid) {
         return axios({
             method: 'post',
             url: SERVER_URL + '/create_joke/',
             data: {
                 text: text,
                 tags: tags.split(' '),
-                author_name: author_name
+                author_name: author_name,
+                uid: uid
             }
         })
     },
@@ -79,6 +80,26 @@ export const axios_requests = {
             data: {
                 name: name,
                 password: password
+            }
+        })
+    },
+
+    deleteJoke(id) {
+        return axios({
+            method: 'delete',
+            url: SERVER_URL + '/delete_joke/',
+            data: {
+                id: id
+            }
+        })
+    },
+
+    getJokesByUID(uid) {
+        return axios({
+            method: 'post',
+            url: SERVER_URL + '/joke_by_uid/',
+            data: {
+                uid: uid
             }
         })
     }

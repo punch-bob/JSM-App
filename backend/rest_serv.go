@@ -13,6 +13,8 @@ import (
 	"github.com/gorilla/mux"
 )
 
+var lastUpdate time.Time
+
 type JokeServer struct {
 	store *JokesStore
 }
@@ -43,7 +45,7 @@ func NewJokeServer() *JokeServer {
 }
 
 func (server *JokeServer) jokeListHandler(write http.ResponseWriter, request *http.Request) {
-	js, err := json.Marshal(server.store.GetAllJokes())
+	js, err := json.Marshal(server.store.LoadJokesFromDB())
 	if err != nil {
 		http.Error(write, err.Error(), http.StatusInternalServerError)
 		return
@@ -99,7 +101,7 @@ func (server *JokeServer) dailyJokeHandler(write http.ResponseWriter, request *h
 }
 
 func (server *JokeServer) generatedJokeHandler(write http.ResponseWriter, request *http.Request) {
-	js, err := json.Marshal(server.store.GetGeneratedJoke())
+	js, err := json.Marshal(server.generateJoke())
 	if err != nil {
 		http.Error(write, err.Error(), http.StatusInternalServerError)
 		return
@@ -110,57 +112,63 @@ func (server *JokeServer) generatedJokeHandler(write http.ResponseWriter, reques
 	write.Write(js)
 }
 
-func (server *JokeServer) generateJoke() int {
-	rand.Seed(time.Now().UnixNano())
+func (server *JokeServer) generateJoke() Joke {
+	if lastUpdate.IsZero() || time.Since(lastUpdate) <= -time.Hour*24 {
+		rand.Seed(time.Now().UnixNano())
 
-	reqText := jokeThemes[rand.Intn(len(jokeThemes))] + " " + jokeAction[rand.Intn(len(jokeAction))]
-	requestBody, err := json.Marshal(map[string]string{
-		"text": reqText,
-	})
-	if err != nil {
-		log.Fatalln(err)
+		reqText := jokeThemes[rand.Intn(len(jokeThemes))] + " " + jokeAction[rand.Intn(len(jokeAction))]
+		requestBody, err := json.Marshal(map[string]string{
+			"text": reqText,
+		})
+		if err != nil {
+			log.Fatalln(err)
+		}
+
+		request, err := http.NewRequest("POST", "https://api.aicloud.sbercloud.ru/public/v1/public_inference/gpt3/predict", bytes.NewBuffer(requestBody))
+		request.Header = http.Header{
+			"Connection":      {"keep-alive"},
+			"Accept":          {"application/json"},
+			"Server":          {"istio-envoy"},
+			"Accept-encoding": {"gzip, deflate, br"},
+			"User-Agent":      {"Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/96.0.4664.110 Safari/537.36 OPR/82.0.4227.43"},
+			"Content-Type":    {"application/json"},
+			"Origin":          {"https://russiannlp.github.io"},
+			"Referer":         {"https://russiannlp.github.io/"},
+			"Sec-Fetch-Site":  {"same-site"},
+			"Sec-Fetch-Mode":  {"cors"},
+			"Sec-Fetch-Dest":  {"empty"},
+			"Accept-Language": {"en-US,en;q=0.9,es-AR;q=0.8,es;q=0.7"},
+		}
+		if err != nil {
+			log.Fatalln(err)
+		}
+
+		client := http.Client{}
+		response, err := client.Do(request)
+		if err != nil {
+			log.Fatalln(err)
+		}
+
+		type AIResponse struct {
+			Predictions string `json:"predictions"`
+		}
+
+		dec := json.NewDecoder(response.Body)
+		var airesp AIResponse
+		if err := dec.Decode(&airesp); err != nil {
+			log.Fatalln(err)
+		}
+
+		jokeText := airesp.Predictions
+		tags := []string{"AI"}
+		genJoke := server.store.CreateJoke(string(jokeText), tags, "ruGPT-3 XL", -1)
+
+		lastUpdate = time.Now()
+		lastUpdate = time.Date(lastUpdate.Year(), lastUpdate.Month(), lastUpdate.Day(), 0, 0, 0, 0, lastUpdate.Location())
+		return genJoke
+	} else {
+		return server.store.GeneratedJoke
 	}
-
-	request, err := http.NewRequest("POST", "https://api.aicloud.sbercloud.ru/public/v1/public_inference/gpt3/predict", bytes.NewBuffer(requestBody))
-	request.Header = http.Header{
-		"Connection":      {"keep-alive"},
-		"Accept":          {"application/json"},
-		"Server":          {"istio-envoy"},
-		"Accept-encoding": {"gzip, deflate, br"},
-		"User-Agent":      {"Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/96.0.4664.110 Safari/537.36 OPR/82.0.4227.43"},
-		"Content-Type":    {"application/json"},
-		"Origin":          {"https://russiannlp.github.io"},
-		"Referer":         {"https://russiannlp.github.io/"},
-		"Sec-Fetch-Site":  {"same-site"},
-		"Sec-Fetch-Mode":  {"cors"},
-		"Sec-Fetch-Dest":  {"empty"},
-		"Accept-Language": {"en-US,en;q=0.9,es-AR;q=0.8,es;q=0.7"},
-	}
-	if err != nil {
-		log.Fatalln(err)
-	}
-
-	client := http.Client{}
-	response, err := client.Do(request)
-	if err != nil {
-		log.Fatalln(err)
-	}
-
-	type AIResponse struct {
-		Predictions string `json:"predictions"`
-	}
-
-	dec := json.NewDecoder(response.Body)
-	var airesp AIResponse
-	if err := dec.Decode(&airesp); err != nil {
-		log.Fatalln(err)
-	}
-
-	jokeText := airesp.Predictions
-	tags := []string{"AI"}
-	genJokeId := server.store.CreateJoke(string(jokeText), tags, "ruGPT-3 XL")
-
-	return genJokeId
 }
 
 func (server *JokeServer) createJokeHandler(write http.ResponseWriter, request *http.Request) {
@@ -168,6 +176,7 @@ func (server *JokeServer) createJokeHandler(write http.ResponseWriter, request *
 		Text       string   `json:"text"`
 		Tags       []string `json:"tags"`
 		AuthorName string   `json:"author_name"`
+		UserId     int      `json:"uid"`
 	}
 
 	dec := json.NewDecoder(request.Body)
@@ -178,7 +187,7 @@ func (server *JokeServer) createJokeHandler(write http.ResponseWriter, request *
 		return
 	}
 
-	js, err := json.Marshal(server.store.CreateJoke(jl.Text, jl.Tags, jl.AuthorName))
+	js, err := json.Marshal(server.store.CreateJoke(jl.Text, jl.Tags, jl.AuthorName, jl.UserId))
 	if err != nil {
 		http.Error(write, err.Error(), http.StatusInternalServerError)
 		return
@@ -189,7 +198,7 @@ func (server *JokeServer) createJokeHandler(write http.ResponseWriter, request *
 	write.Write(js)
 }
 
-func (server *JokeServer) findJokeByTagsHendler(write http.ResponseWriter, request *http.Request) {
+func (server *JokeServer) findJokeByTagsHandler(write http.ResponseWriter, request *http.Request) {
 	type RequestTemplate struct {
 		Tags []string `json:"tags"`
 	}
@@ -214,6 +223,47 @@ func (server *JokeServer) findJokeByTagsHendler(write http.ResponseWriter, reque
 	write.Write(js)
 }
 
+func (server *JokeServer) deleteJokeHandler(write http.ResponseWriter, request *http.Request) {
+	type RequestTemplate struct {
+		Id int `json:"id"`
+	}
+
+	dec := json.NewDecoder(request.Body)
+	var rt RequestTemplate
+	err := dec.Decode(&rt)
+	if err != nil {
+		http.Error(write, err.Error(), http.StatusBadRequest)
+		return
+	}
+
+	server.store.DeleteJoke(rt.Id)
+}
+
+func (server *JokeServer) findJokeByUIDHandler(write http.ResponseWriter, request *http.Request) {
+	type RequestTemplate struct {
+		Uid int `json:"uid"`
+	}
+
+	dec := json.NewDecoder(request.Body)
+	var rt RequestTemplate
+	err := dec.Decode(&rt)
+	if err != nil {
+		http.Error(write, err.Error(), http.StatusBadRequest)
+		return
+	}
+
+	jokeList := server.store.GetJokesByUID(rt.Uid)
+	js, err := json.Marshal(jokeList)
+	if err != nil {
+		http.Error(write, err.Error(), http.StatusInternalServerError)
+		return
+	}
+
+	write.Header().Set("Access-Control-Allow-Origin", "*")
+	write.Header().Set("Content-Type", "application/json")
+	write.Write(js)
+}
+
 func main() {
 	log.Println("start")
 
@@ -221,14 +271,16 @@ func main() {
 	server := NewJokeServer()
 	defer server.store.db.Close()
 
-	server.store.GeneratedJokeId = server.generateJoke()
+	server.store.GeneratedJoke = server.generateJoke()
 
 	router.HandleFunc("/joke_list/", server.jokeListHandler).Methods("GET")
 	router.HandleFunc("/update_rating/", server.updateJokeRatingHandler).Methods("POST")
 	router.HandleFunc("/daily_joke/", server.dailyJokeHandler).Methods("GET")
 	router.HandleFunc("/generated_joke/", server.generatedJokeHandler).Methods("GET")
 	router.HandleFunc("/create_joke/", server.createJokeHandler).Methods("POST")
-	router.HandleFunc("/joke_by_tags/", server.findJokeByTagsHendler).Methods("POST")
+	router.HandleFunc("/joke_by_tags/", server.findJokeByTagsHandler).Methods("POST")
+	router.HandleFunc("/joke_by_uid/", server.findJokeByUIDHandler).Methods("POST")
+	router.HandleFunc("/delete_joke/", server.deleteJokeHandler).Methods("DELETE")
 
 	//Header sets
 	headersOk := handlers.AllowedHeaders([]string{"Accept", "Accept-Language", "Content-Type", "Content-Language", "Origin"})
@@ -236,5 +288,5 @@ func main() {
 	methodsOk := handlers.AllowedMethods([]string{"GET", "POST", "DELETE", "HEAD", "PUT", "OPTIONS"})
 
 	// http.ListenAndServe(os.Getenv("SERVER_PORT"), handlers.CORS(headersOk, originsOk, methodsOk)(router))
-	http.ListenAndServe(":8081", handlers.CORS(headersOk, originsOk, methodsOk)(router))
+	http.ListenAndServe(":8080", handlers.CORS(headersOk, originsOk, methodsOk)(router))
 }
