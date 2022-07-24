@@ -31,12 +31,14 @@ export default {
             tags: ''
         }
     },
+
     methods: {
         closePage: function () {
             this.show = false
             this.text = ''
             this.tags = []
         },
+        
         createJoke: function() {
             axios_requests.createJoke(this.text, this.tags, this.authorName, parseInt(localStorage.uid)).then(() => {
                 this.closePage()

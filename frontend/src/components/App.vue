@@ -74,6 +74,7 @@ export default {
     LogUpPage,
     JokeCreationPage
   },
+
   beforeCreate() {
     axios_requests.get().then(result => {
         this.jokeList = result.data
@@ -106,6 +107,7 @@ export default {
         showNewJokeList: false
     }
   },
+
   methods: {
     showAuthPage: function() {
         this.$refs.authPage.show = true
@@ -161,8 +163,8 @@ export default {
 
     updateJokeList: function() {
         axios_requests.get().then(result => {
-        this.jokeList = result.data
-    })
+            this.jokeList = result.data
+        })
     }
   }
 }

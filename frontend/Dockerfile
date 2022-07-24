@@ -4,6 +4,7 @@ ARG NODE_ENV
 ARG API_BASE_URL
 ENV NODE_ENV "$NODE_ENV"
 ENV API_BASE_URL "$API_BASE_URL"
+ENV API_AUTH_URL "$API_AUTH_URL"
 
 WORKDIR /app
 COPY ["package.json", "package-lock.json*", "./"]
@@ -14,4 +15,6 @@ RUN npm run build
 # production stage
 FROM nginx:stable-alpine as production-stage
 COPY --from=build-stage /app/dist /usr/share/nginx/html
+COPY --from=build-stage /app/replace_api_url.sh /
 EXPOSE 80
+CMD ["sh", "replace_api_url.sh"]

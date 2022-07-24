@@ -48,12 +48,14 @@ export default {
                 id: 1,
                 src: "/public/hide-password.svg"
             },
+            
             {
                 id: 2,
                 src: "/public/show-password.svg"
             }]
         }
     },
+
     methods: {
         showPassword: function() {
             if (this.type === 'password') {
@@ -62,6 +64,7 @@ export default {
                 this.type = 'password'
             }
         },
+
         closePage: function () {
             this.show = false
             this.password = ''
@@ -71,6 +74,7 @@ export default {
             this.imgIndex = 1
             this.image = this.images[0]
         },
+
         tryLogIn: function() {
             if (this.password !== this.repeatPassword) {
                 this.errorMessage = "Passwords don't match!"
@@ -94,15 +98,17 @@ export default {
                 this.closePage()
             })
         },
+
         switchImage: function() {
             this.image = this.images[this.imgIndex]
             this.imgIndex = (this.imgIndex + 1) % this.images.length;
             this.showPassword()
         },
     },
+
     mounted() {
         this.switchImage()
-    },
+    }
 }
 </script>
 

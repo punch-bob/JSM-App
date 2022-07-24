@@ -1,8 +1,8 @@
 import axios from "axios"
 
-const SERVER_URL = 'http://localhost:8081'
+const SERVER_URL = '_API_BASE_URL'
 
-const AUTH_SERVER_URL = 'http://localhost:8082'
+const AUTH_SERVER_URL = '_API_AUTH_URL'
 
 export const axios_requests = {
     get() {

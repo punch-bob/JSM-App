@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"log"
 	"net/http"
+	"os"
 	"regexp"
 	"unicode"
 
@@ -76,8 +77,8 @@ func (server *AuthServer) CheckUserPassword(username, password string) (int, boo
 		Username string
 		Password []byte
 	}
-	// rows, err := server.db.Query("select * from "+os.Getenv("DB_NAME")+"."+os.Getenv("TABLE_NAME")+" where username = ?", username)
-	rows, err := server.db.Query("select * from account_db.user where username = ?", username)
+	rows, err := server.db.Query("select * from "+os.Getenv("DB_NAME")+".user where username = ?", username)
+	// rows, err := server.db.Query("select * from account_db.user where username = ?", username)
 	if err != nil {
 		log.Println(err)
 		return -1, false
@@ -127,8 +128,8 @@ func (server *AuthServer) AddUser(name, password string) (int, error) {
 		return -1, err
 	}
 
-	// res, err := server.db.Exec("insert into "+os.Getenv("DB_NAME")+"."+os.Getenv("TABLE_NAME")+" (username, password) values (?, ?)", name, hashedPassword)
-	res, err := server.db.Exec("insert into account_db.user (username, password) values (?, ?)", name, hashedPassword)
+	res, err := server.db.Exec("insert into "+os.Getenv("DB_NAME")+".user (username, password) values (?, ?)", name, hashedPassword)
+	// res, err := server.db.Exec("insert into account_db.user (username, password) values (?, ?)", name, hashedPassword)
 	if err != nil {
 		log.Println(err)
 		return -1, err
@@ -204,12 +205,13 @@ func main() {
 	log.Println("start")
 	var server AuthServer
 	var err error
-	// dataSourceName := os.Getenv("DB_LOGIN") + ":" + os.Getenv("DB_PASSWORD") + "@/" + os.Getenv("DB_NAME")
-	dataSourceName := "root:password@/account_db"
+	dataSourceName := os.Getenv("DB_LOGIN") + ":" + os.Getenv("DB_PASSWORD") + "@/" + os.Getenv("DB_NAME")
+	// dataSourceName := "root:password@/account_db"
 	server.db, err = sql.Open("mysql", dataSourceName)
 	if err != nil {
 		panic(err)
 	}
+	log.Println("db connected")
 
 	defer server.db.Close()
 	router := mux.NewRouter()
@@ -222,6 +224,6 @@ func main() {
 	originsOk := handlers.AllowedOrigins([]string{"*"})
 	methodsOk := handlers.AllowedMethods([]string{"GET", "POST", "DELETE", "HEAD", "PUT", "OPTIONS"})
 
-	// http.ListenAndServe(os.Getenv("SERVER_PORT"), handlers.CORS(headersOk, originsOk, methodsOk)(router))
-	http.ListenAndServe(":8082", handlers.CORS(headersOk, originsOk, methodsOk)(router))
+	log.Fatal(http.ListenAndServe(os.Getenv("SERVER_PORT"), handlers.CORS(headersOk, originsOk, methodsOk)(router)))
+	// http.ListenAndServe(":8080", handlers.CORS(headersOk, originsOk, methodsOk)(router))
 }

@@ -1,5 +1,5 @@
 <template>
-    <div v-if="show" class="joke-space">
+    <div class="joke-space">
         <!--Acc data-->
         <div class="joke-data">
             <img src="/public/clown-acc.svg" class="acc-avatar">
@@ -28,13 +28,14 @@ export default {
     components: {
         TagsList
     },
+
     data() {
         return {
-            show: true,
             rating: this.joke.rate,
             usersJoke: false
         }
     },
+
     mounted() {
         if (localStorage.uid) {
             if (parseInt(localStorage.uid) === this.joke.uid) {
@@ -42,6 +43,7 @@ export default {
             }
         }
     },
+
     methods: {
         increaseRating: function () {
             if (!localStorage.authorName) {
@@ -77,6 +79,7 @@ export default {
             })
         }
     },
+
     computed: {
         formatedDate() {
             return this.joke.date.substring(0, 10).replaceAll('-', '.')
@@ -88,8 +91,10 @@ export default {
         if (localStorage.uid) {
             if (parseInt(localStorage.uid) === this.joke.uid) {
                 this.usersJoke = true
+                return
             }
         }
+        this.usersJoke = false
     }
 }
 </script>

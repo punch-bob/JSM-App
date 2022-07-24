@@ -1,6 +1,6 @@
 <template>
     <div class="tag-wrapper">
-        <span v-if="ok" class="tag">{{tag}}</span>
+        <span v-if="ok" class="tag">{{ tag }}</span>
     </div>
 </template>
 
@@ -11,6 +11,7 @@ export default {
             required: true
         }
     },
+
     data() {
         return {
             ok: this.tag !== ""

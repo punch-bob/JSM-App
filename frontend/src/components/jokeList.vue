@@ -13,6 +13,7 @@ export default {
     components: {
         Joke
     },
+    
     computed: {
         sortedJokes() {
             let tmp = []

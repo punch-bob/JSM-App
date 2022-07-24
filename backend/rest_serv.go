@@ -6,6 +6,7 @@ import (
 	"log"
 	"math/rand"
 	"net/http"
+	"os"
 	"time"
 
 	_ "github.com/go-sql-driver/mysql"
@@ -113,7 +114,7 @@ func (server *JokeServer) generatedJokeHandler(write http.ResponseWriter, reques
 }
 
 func (server *JokeServer) generateJoke() Joke {
-	if lastUpdate.IsZero() || time.Since(lastUpdate) <= -time.Hour*24 {
+	if lastUpdate.IsZero() || time.Since(lastUpdate) >= time.Hour*24 {
 		rand.Seed(time.Now().UnixNano())
 
 		reqText := jokeThemes[rand.Intn(len(jokeThemes))] + " " + jokeAction[rand.Intn(len(jokeAction))]
@@ -287,6 +288,6 @@ func main() {
 	originsOk := handlers.AllowedOrigins([]string{"*"})
 	methodsOk := handlers.AllowedMethods([]string{"GET", "POST", "DELETE", "HEAD", "PUT", "OPTIONS"})
 
-	// http.ListenAndServe(os.Getenv("SERVER_PORT"), handlers.CORS(headersOk, originsOk, methodsOk)(router))
-	http.ListenAndServe(":8080", handlers.CORS(headersOk, originsOk, methodsOk)(router))
+	http.ListenAndServe(os.Getenv("SERVER_PORT"), handlers.CORS(headersOk, originsOk, methodsOk)(router))
+	// http.ListenAndServe(":8080", handlers.CORS(headersOk, originsOk, methodsOk)(router))
 }

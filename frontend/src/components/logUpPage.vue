@@ -49,6 +49,7 @@ export default {
             }]
         }
     },
+
     methods: {
         showPassword: function() {
             if (this.type === 'password') {
@@ -57,6 +58,7 @@ export default {
                 this.type = 'password'
             }
         },
+
         closePage: function () {
             this.show = false
             this.password = ''
@@ -64,6 +66,7 @@ export default {
             this.imgIndex = 1
             this.image = this.images[0]
         },
+
         tryLogUp: function() {
             axios_requests.logUp(this.user.username, this.password).then((result) => {
                 if (result.data.server_message !== 'Ok') {
@@ -78,6 +81,7 @@ export default {
                 }
             })
         },
+
         switchImage: function() {
             this.imgIndex = (this.imgIndex + 1) % this.images.length;
             this.image = this.images[this.imgIndex]
@@ -88,6 +92,7 @@ export default {
             this.closePage()
         }
     },
+    
     mounted() {
         this.imgIndex = 0
         this.image = this.images[0]
