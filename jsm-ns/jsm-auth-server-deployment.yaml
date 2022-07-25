@@ -1,0 +1,26 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: auth-server
+  labels:
+    tier: auth-server
+    app: jsm
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      tier: auth-server
+  template:
+    metadata:
+      labels:
+        tier: auth-server
+    spec:
+      containers:
+        - name: auth-server
+          image: punchbob/auth:latest
+          envFrom:
+            - configMapRef:
+                name: auth-config
+          ports:
+            - containerPort: 8080
+              protocol: TCP

@@ -1,0 +1,11 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: content-config
+data:
+  SERVER_PORT: "8080"
+  DB_LOGIN: "root"
+  DB_PASSWORD: "password"
+  DB_NAME: "joke_db"
+  DB_HOST: "joke-db"
+  DB_PORT: "3306"

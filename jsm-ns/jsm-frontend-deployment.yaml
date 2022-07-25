@@ -1,0 +1,26 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: frontend
+  labels:
+    tier: frontend
+    app: jsm
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      tier: frontend
+  template:
+    metadata:
+      labels:
+        tier: frontend
+    spec:
+      containers:
+        - name: frontend
+          image: punchbob/front:latest
+          envFrom:
+            - configMapRef:
+                name: frontend-config
+          ports:
+            - containerPort: 80
+              protocol: TCP

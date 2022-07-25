@@ -1,0 +1,26 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: content-server
+  labels:
+    tier: content-server
+    app: jsm
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      tier: content-server
+  template:
+    metadata:
+      labels:
+        tier: content-server
+    spec:
+      containers:
+        - name: content-server
+          image: punchbob/back:latest
+          envFrom:
+            - configMapRef:
+                name: content-config
+          ports:
+            - containerPort: 8080
+              protocol: TCP
