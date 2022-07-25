@@ -206,7 +206,7 @@ export default {
     .delete-btn {
         display: flex;
         margin-bottom: 25px;
-        margin-left: 14px;
+        margin-left: 35px;
         margin-top: -15px;
 
         border-radius: 10px;

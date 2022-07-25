@@ -220,8 +220,8 @@ export default {
 
     .reg-btns {
         position: absolute;
-        left: 82%;
-        top: 30%;
+        left: 85.5%;
+        top: 25%;
         display: flex
     }
 

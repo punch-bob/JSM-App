@@ -40,7 +40,7 @@ var jokeAction = []string{"шел как-то по лесу", "встретил 
 	"в белом плаще с кровавым подбоем, шаркающей кавалерийской походкой заходит в бар", "собрались на рыбалку", "ограбили"}
 
 func NewJokeServer() *JokeServer {
-	store := NewJokesStore()
+	store := newJokesStore()
 	return &JokeServer{
 		store: store,
 	}
@@ -167,6 +167,7 @@ func (server *JokeServer) generateJoke() Joke {
 
 		lastUpdate = time.Now()
 		lastUpdate = time.Date(lastUpdate.Year(), lastUpdate.Month(), lastUpdate.Day(), 0, 0, 0, 0, lastUpdate.Location())
+		server.store.GeneratedJoke = genJoke
 		return genJoke
 	} else {
 		return server.store.GeneratedJoke
