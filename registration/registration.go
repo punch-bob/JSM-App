@@ -18,6 +18,15 @@ import (
 
 var regexpValidToken = regexp.MustCompile("^[a-zA-Z0-9.!#$%&'*+/=?^_`{|}~-]*$")
 
+var (
+	DB_NAME     = os.Getenv("DB_NAME")
+	DB_LOGIN    = os.Getenv("DB_LOGIN")
+	DB_PORT     = os.Getenv("DB_PORT")
+	DB_HOST     = os.Getenv("DB_HOST")
+	DB_PASSWORD = os.Getenv("DB_PASSWORD")
+	SERVER_PORT = os.Getenv("SERVER_PORT")
+)
+
 type AuthServer struct {
 	db *sql.DB
 }
@@ -71,14 +80,13 @@ func checkPasswordStrength(password string) int {
 	return boolToInt(hasUpper) + boolToInt(hasLower) + boolToInt(hasNumber) + boolToInt(hasSpecial)
 }
 
-func (server *AuthServer) CheckUserPassword(username, password string) (int, bool) {
+func (server *AuthServer) checkUserPassword(username, password string) (int, bool) {
 	type TableRaw struct {
 		Id       int
 		Username string
 		Password []byte
 	}
-	rows, err := server.db.Query("select * from "+os.Getenv("DB_NAME")+".user where username = ?", username)
-	// rows, err := server.db.Query("select * from account_db.user where username = ?", username)
+	rows, err := server.db.Query("select * from "+DB_NAME+".user where username = ?", username)
 	if err != nil {
 		log.Println(err)
 		return -1, false
@@ -106,7 +114,7 @@ func (server *AuthServer) CheckUserPassword(username, password string) (int, boo
 	return -1, false
 }
 
-func (server *AuthServer) AddUser(name, password string) (int, error) {
+func (server *AuthServer) addUser(name, password string) (int, error) {
 	if !checkPasswordValidation(password) {
 		return -1, fmt.Errorf("your password is invalid")
 	}
@@ -128,8 +136,7 @@ func (server *AuthServer) AddUser(name, password string) (int, error) {
 		return -1, err
 	}
 
-	res, err := server.db.Exec("insert into "+os.Getenv("DB_NAME")+".user (username, password) values (?, ?)", name, hashedPassword)
-	// res, err := server.db.Exec("insert into account_db.user (username, password) values (?, ?)", name, hashedPassword)
+	res, err := server.db.Exec("insert into "+DB_NAME+".user (username, password) values (?, ?)", name, hashedPassword)
 	if err != nil {
 		log.Println(err)
 		return -1, err
@@ -143,7 +150,7 @@ func (server *AuthServer) AddUser(name, password string) (int, error) {
 	return int(id), nil
 }
 
-func (server *AuthServer) AuthorizationHandler(write http.ResponseWriter, request *http.Request) {
+func (server *AuthServer) authorizationHandler(write http.ResponseWriter, request *http.Request) {
 	dec := json.NewDecoder(request.Body)
 	var user User
 	err := dec.Decode(&user)
@@ -153,7 +160,7 @@ func (server *AuthServer) AuthorizationHandler(write http.ResponseWriter, reques
 	}
 
 	var response Response
-	id, err := server.AddUser(user.Name, user.Password)
+	id, err := server.addUser(user.Name, user.Password)
 	response.Id = id
 	if err != nil {
 		response.ServerMessage = err.Error()
@@ -172,7 +179,7 @@ func (server *AuthServer) AuthorizationHandler(write http.ResponseWriter, reques
 	write.Write(js)
 }
 
-func (server *AuthServer) LogUpHandler(write http.ResponseWriter, request *http.Request) {
+func (server *AuthServer) logUpHandler(write http.ResponseWriter, request *http.Request) {
 	dec := json.NewDecoder(request.Body)
 	var user User
 	err := dec.Decode(&user)
@@ -182,7 +189,7 @@ func (server *AuthServer) LogUpHandler(write http.ResponseWriter, request *http.
 	}
 
 	var response Response
-	id, correct := server.CheckUserPassword(user.Name, user.Password)
+	id, correct := server.checkUserPassword(user.Name, user.Password)
 	response.Id = id
 	if !correct {
 		response.ServerMessage = "Wrong password or username"
@@ -205,25 +212,22 @@ func main() {
 	log.Println("start")
 	var server AuthServer
 	var err error
-	dataSourceName := os.Getenv("DB_LOGIN") + ":" + os.Getenv("DB_PASSWORD") + "@/" + os.Getenv("DB_NAME")
-	// dataSourceName := "root:password@/account_db"
+	dataSourceName := DB_LOGIN + ":" + DB_PASSWORD + "@tcp(" + DB_HOST + ":" + DB_PORT + ")/" + DB_NAME
 	server.db, err = sql.Open("mysql", dataSourceName)
 	if err != nil {
-		panic(err)
+		log.Println(err)
 	}
-	log.Println("db connected")
 
 	defer server.db.Close()
 	router := mux.NewRouter()
 
-	router.HandleFunc("/authorization/", server.AuthorizationHandler).Methods("POST")
-	router.HandleFunc("/log_up/", server.LogUpHandler).Methods("POST")
+	router.HandleFunc("/authorization/", server.authorizationHandler).Methods("POST")
+	router.HandleFunc("/log_up/", server.logUpHandler).Methods("POST")
 
 	//Header sets
 	headersOk := handlers.AllowedHeaders([]string{"Accept", "Accept-Language", "Content-Type", "Content-Language", "Origin"})
 	originsOk := handlers.AllowedOrigins([]string{"*"})
 	methodsOk := handlers.AllowedMethods([]string{"GET", "POST", "DELETE", "HEAD", "PUT", "OPTIONS"})
 
-	log.Fatal(http.ListenAndServe(os.Getenv("SERVER_PORT"), handlers.CORS(headersOk, originsOk, methodsOk)(router)))
-	// http.ListenAndServe(":8080", handlers.CORS(headersOk, originsOk, methodsOk)(router))
+	log.Fatal(http.ListenAndServe(":"+SERVER_PORT, handlers.CORS(headersOk, originsOk, methodsOk)(router)))
 }

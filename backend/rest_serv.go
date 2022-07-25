@@ -15,6 +15,7 @@ import (
 )
 
 var lastUpdate time.Time
+var SERVER_PORT = os.Getenv("SERVER_PORT")
 
 type JokeServer struct {
 	store *JokesStore
@@ -46,7 +47,7 @@ func NewJokeServer() *JokeServer {
 }
 
 func (server *JokeServer) jokeListHandler(write http.ResponseWriter, request *http.Request) {
-	js, err := json.Marshal(server.store.LoadJokesFromDB())
+	js, err := json.Marshal(server.store.getJokeList())
 	if err != nil {
 		http.Error(write, err.Error(), http.StatusInternalServerError)
 		return
@@ -73,9 +74,9 @@ func (server *JokeServer) updateJokeRatingHandler(write http.ResponseWriter, req
 
 	var jokeRating int
 	if rr.Reaction == "increase" {
-		jokeRating = server.store.IncreaseRating(rr.Uid, rr.Id)
+		jokeRating = server.store.increaseRating(rr.Uid, rr.Id)
 	} else if rr.Reaction == "decrease" {
-		jokeRating = server.store.DecreaseRating(rr.Uid, rr.Id)
+		jokeRating = server.store.decreaseRating(rr.Uid, rr.Id)
 	}
 
 	js, err := json.Marshal(jokeRating)
@@ -90,7 +91,7 @@ func (server *JokeServer) updateJokeRatingHandler(write http.ResponseWriter, req
 }
 
 func (server *JokeServer) dailyJokeHandler(write http.ResponseWriter, request *http.Request) {
-	js, err := json.Marshal(server.store.GetDailyJoke())
+	js, err := json.Marshal(server.store.getDailyJoke())
 	if err != nil {
 		http.Error(write, err.Error(), http.StatusInternalServerError)
 		return
@@ -162,7 +163,7 @@ func (server *JokeServer) generateJoke() Joke {
 
 		jokeText := airesp.Predictions
 		tags := []string{"AI"}
-		genJoke := server.store.CreateJoke(string(jokeText), tags, "ruGPT-3 XL", -1)
+		genJoke := server.store.createJoke(string(jokeText), tags, "ruGPT-3 XL", -1)
 
 		lastUpdate = time.Now()
 		lastUpdate = time.Date(lastUpdate.Year(), lastUpdate.Month(), lastUpdate.Day(), 0, 0, 0, 0, lastUpdate.Location())
@@ -188,7 +189,7 @@ func (server *JokeServer) createJokeHandler(write http.ResponseWriter, request *
 		return
 	}
 
-	js, err := json.Marshal(server.store.CreateJoke(jl.Text, jl.Tags, jl.AuthorName, jl.UserId))
+	js, err := json.Marshal(server.store.createJoke(jl.Text, jl.Tags, jl.AuthorName, jl.UserId))
 	if err != nil {
 		http.Error(write, err.Error(), http.StatusInternalServerError)
 		return
@@ -212,7 +213,7 @@ func (server *JokeServer) findJokeByTagsHandler(write http.ResponseWriter, reque
 		return
 	}
 
-	jokeList := server.store.GetJokesByTags(rt.Tags)
+	jokeList := server.store.getJokesByTagList(rt.Tags)
 	js, err := json.Marshal(jokeList)
 	if err != nil {
 		http.Error(write, err.Error(), http.StatusInternalServerError)
@@ -237,7 +238,7 @@ func (server *JokeServer) deleteJokeHandler(write http.ResponseWriter, request *
 		return
 	}
 
-	server.store.DeleteJoke(rt.Id)
+	server.store.deleteJoke(rt.Id)
 }
 
 func (server *JokeServer) findJokeByUIDHandler(write http.ResponseWriter, request *http.Request) {
@@ -253,7 +254,7 @@ func (server *JokeServer) findJokeByUIDHandler(write http.ResponseWriter, reques
 		return
 	}
 
-	jokeList := server.store.GetJokesByUID(rt.Uid)
+	jokeList := server.store.getJokesByUID(rt.Uid)
 	js, err := json.Marshal(jokeList)
 	if err != nil {
 		http.Error(write, err.Error(), http.StatusInternalServerError)
@@ -272,8 +273,6 @@ func main() {
 	server := NewJokeServer()
 	defer server.store.db.Close()
 
-	server.store.GeneratedJoke = server.generateJoke()
-
 	router.HandleFunc("/joke_list/", server.jokeListHandler).Methods("GET")
 	router.HandleFunc("/update_rating/", server.updateJokeRatingHandler).Methods("POST")
 	router.HandleFunc("/daily_joke/", server.dailyJokeHandler).Methods("GET")
@@ -288,6 +287,5 @@ func main() {
 	originsOk := handlers.AllowedOrigins([]string{"*"})
 	methodsOk := handlers.AllowedMethods([]string{"GET", "POST", "DELETE", "HEAD", "PUT", "OPTIONS"})
 
-	http.ListenAndServe(os.Getenv("SERVER_PORT"), handlers.CORS(headersOk, originsOk, methodsOk)(router))
-	// http.ListenAndServe(":8080", handlers.CORS(headersOk, originsOk, methodsOk)(router))
+	http.ListenAndServe(":"+SERVER_PORT, handlers.CORS(headersOk, originsOk, methodsOk)(router))
 }

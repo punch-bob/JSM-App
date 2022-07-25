@@ -17,5 +17,6 @@ export default {
 <style>
     .tags-list {
         display: flex;
+        margin-left: 17px;
     }
 </style>

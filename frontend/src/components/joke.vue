@@ -111,8 +111,8 @@ export default {
 
     .joke-data {
         display: inline-block;
-        min-width: 80%;
-        max-width: 80%;
+        min-width: 85%;
+        max-width: 85%;
     }
 
     .acc-avatar {
@@ -121,7 +121,7 @@ export default {
         border-color: black;
         width: 25px;
         height: 25px;
-        margin-left: 7px;
+        margin-left: 20px;
         margin-top: 7px;
     }
 
@@ -135,16 +135,15 @@ export default {
 
     .joke-text {
         font-weight: bold;
-        margin-left: 7px;
-        margin-right: 7px;
-        overflow-wrap: break-word;
+        margin-left: 20px;
+        margin-right: 0;
         word-wrap: break-word;
         hyphens: auto;
     }
 
     .joke-date {
         color: gray;
-        margin-left: 7px;
+        margin-left: 20px;
         margin-bottom: 7px;
         margin-top: -23px;
     }
@@ -156,8 +155,8 @@ export default {
         left: 0; 
         right: 0;
         margin: auto;
-        max-width: 20%;
-        min-width: 20%;
+        max-width: 15%;
+        min-width: 15%;
     }
 
     .rating-btn {
@@ -207,7 +206,7 @@ export default {
     .delete-btn {
         display: flex;
         margin-bottom: 25px;
-        margin-left: 41px;
+        margin-left: 14px;
         margin-top: -15px;
 
         border-radius: 10px;

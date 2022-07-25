@@ -54,8 +54,8 @@ export default {
         background: var(--header-color);
         border-radius: 15px;
         padding: 10px;
-        width: 60vh;
-        height: 75vh;
+        width: 40%;
+        height: 60%;
         position: absolute;
         top: 0;
         left: 0;

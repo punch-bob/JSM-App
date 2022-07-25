@@ -94,8 +94,8 @@ export default {
                         uid: result.data.id
                     }
                     this.$emit('setUser', user)
+                    this.closePage()
                 } 
-                this.closePage()
             })
         },
 

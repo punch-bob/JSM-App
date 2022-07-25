@@ -151,6 +151,7 @@ export default {
         border-style: solid; 
         line-height: 30px;
         font-weight: bold;
+        min-width: 100%;
     }
 
     .input-section {
@@ -158,6 +159,7 @@ export default {
         color: var(--logo-color);
         font-weight: bold;
         float: left;
+        min-width: 85%;
     }
 
     .close-btn {
