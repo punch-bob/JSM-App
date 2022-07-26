@@ -12,21 +12,21 @@
                 <div class="input-section">
                     <input :type="type" size="25" class="text-input" placeholder="Password" v-model="password">
                     <button class="hide-show-password-btn">
-                        <img v-if="image" @click="switchImage" class="image" :src="image.src">
+                        <img v-if="image" @click="switchImage" class="image" :key="image.id" :src="image.src" alt=""/>
                     </button>
                 </div>
                 
 
                 <div class="input-section">
                     <input :type="type" size="25" class="text-input" placeholder="Repeat password" v-model="repeatPassword">
-                    <button class="hide-show-password-btn">
-                        <img v-if="image" @click="switchImage" class="image" :src="image.src">
+                    <button class="hide-show-password-btn" >
+                        <img v-if="image" @click="switchImage" class="image" :key="image.id" :src="image.src" alt=""/>
                     </button>
                 </div>
             </div>
 
             <button class="login-btn" @click="tryLogIn">Log In</button>
-            <output v-if="errorMessage !== ''" class="error-msg">{{errorMessage}}</output>
+            <output v-if="errorMessage !== ''" class="error-msg">{{ errorMessage }}</output>
         </div>
     </div>
 </template>
@@ -46,12 +46,12 @@ export default {
             image: null,
             images: [{
                 id: 1,
-                src: "/public/hide-password.svg"
+                src: './public/hide-password.svg',
             },
             
             {
                 id: 2,
-                src: "/public/show-password.svg"
+                src: './public/show-password.svg',
             }]
         }
     },

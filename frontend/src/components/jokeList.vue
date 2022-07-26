@@ -1,7 +1,7 @@
 <template>
     <div>
         <ul>
-            <Joke v-for="joke of sortedJokes" v-bind:joke="joke" @deleteJoke="deleteJoke" @openLogUpPage="openLogUpPage"/>
+            <Joke v-for="joke of sortedJokes" v-bind:joke="joke" @deleteJoke="deleteJoke" @openLogUpPage="openLogUpPage" @getJokesByUID='getJokesByUID'/>
         </ul>
     </div>
 </template>
@@ -15,7 +15,7 @@ export default {
     },
     
     computed: {
-        sortedJokes() {
+        sortedJokes: function() {
             let tmp = []
             tmp = JSON.parse(JSON.stringify(this.jokeList))
             return tmp.sort((a, b) => parseFloat(b.rate) - parseFloat(a.rate))
@@ -27,8 +27,12 @@ export default {
             this.$emit('deleteJoke')
         },
 
-        openAuthPage: function() {
+        openLogUpPage: function() {
             this.$emit('openLogUpPage')
+        },
+
+        getJokesByUID: function(uid) {
+            this.$emit('getJokesByUID', uid)
         }
     }
 }

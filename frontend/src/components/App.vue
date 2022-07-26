@@ -38,7 +38,7 @@
                     <span class="site-header" id="found-bar-text">Found jokes:</span>
                 </div>
 
-                <JokeList v-if="jokeList !== null" v-bind:jokeList='jokeList' @deleteJoke='updateJokeList' @openLogUpPage='showLogUpPage'/>
+                <JokeList v-if="jokeList !== null" v-bind:jokeList='jokeList' @deleteJoke='updateJokeList' @openLogUpPage='showLogUpPage' @getJokesByUID='getJokesByUID'/>
                 <div v-else class="jokes-not-found">
                     <span class="site-header" id="not-found-text">Jokes not found(</span> 
                 </div>
@@ -123,7 +123,6 @@ export default {
         } else {
             this.$refs.jokeCreationPage.show = true
         }
-        
     },
 
     showUsersJokes: function() {
@@ -164,6 +163,13 @@ export default {
     updateJokeList: function() {
         axios_requests.get().then(result => {
             this.jokeList = result.data
+        })
+    },
+
+    getJokesByUID: function(uid) {
+        axios_requests.getJokesByUID(uid).then((result) => {
+            this.jokeList = result.data
+            this.showNewJokeList = true
         })
     }
   }

@@ -3,7 +3,7 @@
         <!--Acc data-->
         <div class="joke-data">
             <img src="/public/clown-acc.svg" class="acc-avatar">
-            <span class="acc-name">{{ joke.author_name }}</span><br>
+            <span class="acc-name" @click="getJokesByUID">{{ joke.author_name }}</span><br>
              <!--Joke-->
             <p class="joke-text">{{ joke.text }}</p>
             <TagsList v-bind:tagsList='joke.tags'/><br>
@@ -26,8 +26,8 @@ import {axios_requests} from '../utils/requests.js'
 export default {
     props: ['joke'],
     components: {
-        TagsList
-    },
+    TagsList,
+},
 
     data() {
         return {
@@ -77,6 +77,10 @@ export default {
                 this.$emit('deleteJoke')
                 this.usersJoke = false
             })
+        },
+
+        getJokesByUID: function() {
+            this.$emit('getJokesByUID', this.joke.uid)
         }
     },
 
@@ -131,6 +135,7 @@ export default {
         left: 7px;
         font-size: 20px;
         font-weight: bold;
+        cursor: pointer;
     }
 
     .joke-text {
