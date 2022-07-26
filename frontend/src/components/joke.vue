@@ -6,7 +6,7 @@
             <span class="acc-name" @click="getJokesByUID">{{ joke.author_name }}</span><br>
              <!--Joke-->
             <p class="joke-text">{{ joke.text }}</p>
-            <TagsList v-bind:tagsList='joke.tags'/><br>
+            <TagsList v-bind:tagsList='joke.tags' @getJokesByTag='getJokesByTag'/><br>
             <span class="joke-date">{{ formatedDate }}</span>
         </div>
 
@@ -81,6 +81,10 @@ export default {
 
         getJokesByUID: function() {
             this.$emit('getJokesByUID', this.joke.uid)
+        },
+
+        getJokesByTag: function(tag) {
+            this.$emit('getJokesByTag', tag)
         }
     },
 

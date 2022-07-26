@@ -38,7 +38,7 @@
                     <span class="site-header" id="found-bar-text">Found jokes:</span>
                 </div>
 
-                <JokeList v-if="jokeList !== null" v-bind:jokeList='jokeList' @deleteJoke='updateJokeList' @openLogUpPage='showLogUpPage' @getJokesByUID='getJokesByUID'/>
+                <JokeList v-if="jokeList !== null" v-bind:jokeList='jokeList' @deleteJoke='updateJokeList' @openLogUpPage='showLogUpPage' @getJokesByUID='getJokesByUID' @getJokesByTag='getJokesByTag'/>
                 <div v-else class="jokes-not-found">
                     <span class="site-header" id="not-found-text">Jokes not found(</span> 
                 </div>
@@ -46,9 +46,9 @@
 
             <div class="daily-jokes" id="daily-jokes">
                 <p class="site-header">Daily joke:</p>
-                <Joke v-bind:joke="dailyJoke"/>
+                <Joke v-bind:joke="dailyJoke" @deleteJoke='updateJokeList' @openLogUpPage='showLogUpPage' @getJokesByUID='getJokesByUID' @getJokesByTag='getJokesByTag'/>
                 <p class="site-header">Today generated:</p>
-                <Joke v-bind:joke="generatedJoke"/>
+                <Joke v-bind:joke="generatedJoke" @deleteJoke='updateJokeList' @openLogUpPage='showLogUpPage' @getJokesByUID='getJokesByUID' @getJokesByTag='getJokesByTag'/>
             </div>
 
             <AuthPage @setUser="setUser" ref="authPage"/>
@@ -168,6 +168,13 @@ export default {
 
     getJokesByUID: function(uid) {
         axios_requests.getJokesByUID(uid).then((result) => {
+            this.jokeList = result.data
+            this.showNewJokeList = true
+        })
+    },
+
+    getJokesByTag: function(tag) {
+        axios_requests.getJokesByTags(tag).then((result) => {
             this.jokeList = result.data
             this.showNewJokeList = true
         })

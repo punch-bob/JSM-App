@@ -1,7 +1,7 @@
 <template>
     <div>
         <ul>
-            <Joke v-for="joke of sortedJokes" v-bind:joke="joke" @deleteJoke="deleteJoke" @openLogUpPage="openLogUpPage" @getJokesByUID='getJokesByUID'/>
+            <Joke v-for="joke of sortedJokes" v-bind:joke="joke" @deleteJoke="deleteJoke" @openLogUpPage="openLogUpPage" @getJokesByUID='getJokesByUID' @getJokesByTag='getJokesByTag'/>
         </ul>
     </div>
 </template>
@@ -33,6 +33,10 @@ export default {
 
         getJokesByUID: function(uid) {
             this.$emit('getJokesByUID', uid)
+        },
+
+        getJokesByTag: function(tag) {
+            this.$emit('getJokesByTag', tag)
         }
     }
 }

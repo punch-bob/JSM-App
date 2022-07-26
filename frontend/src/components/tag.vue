@@ -1,6 +1,6 @@
 <template>
     <div class="tag-wrapper">
-        <span v-if="ok" class="tag">{{ tag }}</span>
+        <span v-if="ok" class="tag" @click="getJokesByTag">{{ tag }}</span>
     </div>
 </template>
 
@@ -16,7 +16,13 @@ export default {
         return {
             ok: this.tag !== ""
         } 
-    }
+    },
+
+    methods: {
+        getJokesByTag: function() {
+            this.$emit('getJokesByTag', this.tag)
+        }
+    },
 }
 </script>
 
@@ -33,5 +39,6 @@ export default {
         color: white;
         margin-left: 4px;
         margin-right: 4px;
+        cursor: pointer;
     }
 </style>
