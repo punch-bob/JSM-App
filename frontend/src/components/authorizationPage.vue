@@ -46,12 +46,12 @@ export default {
             image: null,
             images: [{
                 id: 1,
-                src: './public/hide-password.svg',
+                src: './hide-password.svg',
             },
             
             {
                 id: 2,
-                src: './public/show-password.svg',
+                src: './show-password.svg',
             }]
         }
     },
