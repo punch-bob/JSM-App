@@ -148,6 +148,7 @@ export default {
         margin-right: 0;
         word-wrap: break-word;
         hyphens: auto;
+        white-space: break-spaces;
     }
 
     .joke-date {
